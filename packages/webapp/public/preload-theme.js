@@ -1,7 +1,4 @@
-// Theme preference lives in localStorage under "theme".
-// A saved "dark" or "light" value wins. With nothing stored, light is the
-// default — prefers-color-scheme is not a stored preference.
-// Keep in sync with src/theme/resolveStoredTheme.ts.
+// localStorage "theme" is the only preference. Nothing stored means light.
 function resolveStoredTheme(stored) {
   if (stored === 'dark' || stored === 'light') {
     return stored;

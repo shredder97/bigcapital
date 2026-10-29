@@ -9,7 +9,6 @@ import { withDashboardActions } from '@/containers/Dashboard/withDashboardAction
 import { withDialogActions } from '@/containers/Dialog/withDialogActions';
 import { withUniversalSearchActions } from '@/containers/UniversalSearch/withUniversalSearchActions';
 import { getDashboardRoutes } from '@/routes/dashboard';
-import { persistTheme } from '@/theme/resolveStoredTheme';
 
 interface GlobalHotkeyRoute {
   path: string;
@@ -22,7 +21,7 @@ const handleToggleDarkMode = () => {
 
   document.body.classList.toggle('bp4-dark', nextDark);
   document.documentElement.classList.toggle('bp4-dark', nextDark);
-  persistTheme(nextDark ? 'dark' : 'light');
+  localStorage.setItem('theme', nextDark ? 'dark' : 'light');
 };
 
 type GlobalHotkeysProps = Pick<
