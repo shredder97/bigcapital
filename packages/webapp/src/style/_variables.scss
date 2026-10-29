@@ -4,7 +4,7 @@
 $ns: bp4;
 
 :root {
-  --color-primary: #8abbff;
+  --color-primary: #0047ab;
   --color-danger: red;
 
   // Green colors
@@ -125,8 +125,8 @@ $ns: bp4;
   --color-datatable-head-border: #d2dce2;
   --color-datatable-cell-hover-background: #f5f6f7;
   --color-datatable-cell-border: #d8d8d8;
-  --color-datatable-cell-focus-border: rgba(0, 82, 204, 0.7);
-  --color-datatable-cell-focus-border: rgba(0, 82, 204, 0.7);
+  --color-datatable-cell-focus-border: rgba(0, 71, 171, 0.6);
+  --color-datatable-cell-focus-border: rgba(0, 71, 171, 0.6);
   --color-datatable-no-results-text: #777;
   --color-datatable-no-results-text: #777;
   --color-datatable-caret: #b5b5b5;
@@ -185,7 +185,7 @@ $ns: bp4;
   --color-bank-account-card-background: #fff;
   --color-bank-account-card-text: rgb(23, 43, 77);
   --color-bank-account-card-border: #c8cad0;
-  --color-bank-account-card-hover-border: #0153cc;
+  --color-bank-account-card-hover-border: #0047ab;
 
   --color-bank-account-card-tag-background: rgb(223, 225, 230);
   --color-bank-account-code-text: rgb(23, 43, 77);
@@ -274,10 +274,10 @@ $ns: bp4;
   // Content tabs
   --color-content-tab-background: #fff;
   --color-content-tab-border: #e1e2e8;
-  --color-content-tab-hover-border: #1552c8;
-  --color-content-tab-active-border: #1552c8;
+  --color-content-tab-hover-border: #0047ab;
+  --color-content-tab-active-border: #0047ab;
   --color-content-tab-text: #2f343c;
-  --color-content-tab-active-text: #1552c8;
+  --color-content-tab-active-text: #0047ab;
 
   // Aside
   --color-aside-background: #fff;
@@ -297,7 +297,7 @@ $ns: bp4;
   --color-stepper-step-description-text: #738091;
   --color-stepper-step-description-active-text: var(--color-primary);
   --color-stepper-step-background: #9e9e9e;
-  --color-stepper-step-active-background: rgb(0, 82, 204);
+  --color-stepper-step-active-background: #0047ab;
   --color-stepper-separator: #c5cbd3;
   --color-stepper-step-text: #fff;  
 
@@ -323,7 +323,7 @@ $pt-popover-box-shadow:
   0 8px 24px rgba(16, 22, 26, 0.1);
   
 body.bp4-dark  {
-  --color-primary: #8abbff;
+  --color-primary: #7fa6e8;
   --color-danger: rgb(213, 103, 103);
 
   // Green colors (dark mode - lighter variants)
@@ -382,8 +382,8 @@ body.bp4-dark  {
 
   // Primary alert.
   --color-alert-primary-background: transparent;
-  --color-alert-primary-border: #2d72d2;
-  --color-alert-primary-title-text: #8abbff;
+  --color-alert-primary-border: #7fa6e8;
+  --color-alert-primary-title-text: #7fa6e8;
   --color-alert-primary-description-text: var(--color-light-gray1);
 
   // Input
@@ -444,7 +444,7 @@ body.bp4-dark  {
   --color-datatable-head-border: var(--color-dark-gray4);
   --color-datatable-cell-hover-background: var(--color-dark-gray3);
   --color-datatable-cell-border: var(--color-dark-gray4);
-  --color-datatable-cell-focus-border: rgba(0, 82, 204, 0.7);
+  --color-datatable-cell-focus-border: rgba(127, 166, 232, 0.6);
   --color-datatable-cell-focus-border: var(--color-primary);
   --color-datatable-no-results-text: #777;
   --color-datatable-no-results-text: rgba(255, 255, 255, 0.5);
@@ -507,7 +507,7 @@ body.bp4-dark  {
   --color-bank-account-card-text: var(--color-light-gray5);
   --color-bank-account-card-border: #c8cad0;
   --color-bank-account-card-border: rgba(255, 255, 255, 0.2);
-  --color-bank-account-card-hover-border: #0153cc;
+  --color-bank-account-card-hover-border: #7fa6e8;
 
   --color-bank-account-card-tag-background: rgb(223, 225, 230);
   --color-bank-account-card-tag-background: rgba(255, 255, 255, 0.2);
@@ -657,12 +657,34 @@ $pt-popover-box-shadow:
   0 2px 4px rgba(16, 22, 26, 0.1),
   0 8px 24px rgba(16, 22, 26, 0.1);
 
-$blue1: #0069ff;
-$blue2: #0052ff;
-$blue3: rgb(0, 82, 204);
+$blue1: #00337d;
+$blue2: #003d94;
+$blue3: #0047ab;
 
 $pt-link-color: $blue3;
-$pt-intent-primary: $blue1;
+$pt-intent-primary: $blue3;
+$pt-outline-color: rgba(0, 71, 171, 0.6);
+$pt-icon-color-selected: $pt-intent-primary;
+$pt-dark-link-color: #7fa6e8;
+$pt-dark-icon-color-selected: #7fa6e8;
+$pt-intent-text-colors: (
+  "primary": $blue3,
+  "success": $green2,
+  "warning": $orange2,
+  "danger": $red2,
+);
+$pt-intent-active-text-colors: (
+  "primary": $blue1,
+  "success": $green1,
+  "warning": $orange1,
+  "danger": $red1,
+);
+$pt-dark-intent-text-colors: (
+  "primary": #7fa6e8,
+  "success": $green5,
+  "warning": $orange5,
+  "danger": $red5,
+);
 $menu-item-color-hover: $light-gray4;
 $menu-item-color-active: $light-gray3;
 
@@ -707,7 +729,7 @@ $sidebar-logo-opacity: 0.5;
 $sidebar-submenu-item-bg-color: rgba(255, 255, 255, 0.2);
 
 $form-check-input-checked-color: #fff;
-$form-check-input-checked-bg-color: $blue1;
+$form-check-input-checked-bg-color: $blue3;
 $form-check-input-checked-bg-image: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' xmlns:xlink='http://www.w3.org/1999/xlink' x='0px' y='0px' viewBox='0 0 16 16' enable-background='new 0 0 16 16' xml:space='preserve'><g id='small_tick_1_'><g><path fill='#{$form-check-input-checked-color}' fill-rule='evenodd' clip-rule='evenodd' d='M12,5c-0.28,0-0.53,0.11-0.71,0.29L7,9.59L4.71,7.29C4.53,7.11,4.28,7,4,7C3.45,7,3,7.45,3,8c0,0.28,0.11,0.53,0.29,0.71l3,3C6.47,11.89,6.72,12,7,12s0.53-0.11,0.71-0.29l5-5C12.89,6.53,13,6.28,13,6C13,5.45,12.55,5,12,5z'/></g></g></svg>") !default;
 $form-check-input-indeterminate-bg-image: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' xmlns:xlink='http://www.w3.org/1999/xlink' x='0px' y='0px' viewBox='0 0 16 16' enable-background='new 0 0 16 16' xml:space='preserve'><g id='small_tick_1_'><g><path fill='#{$form-check-input-checked-color}' fill-rule='evenodd' clip-rule='evenodd' d='M11,7H5C4.45,7,4,7.45,4,8c0,0.55,0.45,1,1,1h6c0.55,0,1-0.45,1-1C12,7.45,11.55,7,11,7z'/></g></g></svg>") !default;
 
@@ -716,9 +738,9 @@ $zindex-dashboard-splash-screen: 39;
 $zindex-toast: 40;
 
 // Controls
-$control-checked-background-color: #0069ff !default;
-$control-checked-background-color-hover: #0069ff !default;
-$control-checked-background-color-active: #0069ff !default;
+$control-checked-background-color: #0047ab !default;
+$control-checked-background-color-hover: #003d94 !default;
+$control-checked-background-color-active: #00337d !default;
 $control-box-shadow: inset 0 0 0 1px #666 !default;
 
 // Drawer

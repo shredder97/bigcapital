@@ -158,6 +158,7 @@
       &.bp4-active.bp4-intent-primary {
         background: var(--color-sidebar-menu-item-active-background);
         color: var(--color-sidebar-menu-item-active-text);
+        box-shadow: inset 3px 0 0 #ffc72c;
       }
       >.#{$ns}-icon {
         color: #767b9b;
@@ -213,6 +214,7 @@
 
           &.bp4-active {
             font-weight: 500;
+            box-shadow: none;
           }
         }
       }

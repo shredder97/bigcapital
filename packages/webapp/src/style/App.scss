@@ -107,10 +107,6 @@ body.hide-scrollbar .Pane2 {
   }
 }
 
-.bp4-progress-bar.bp4-intent-primary .bp4-progress-meter {
-  background-color: #0066ff;
-}
-
 .ReactVirtualized__Collection {}
 
 .ReactVirtualized__Collection__innerScrollContainer {}
@@ -308,3 +304,5 @@ span.table-tooltip-overview-target {
 :root {
   --top-offset: 60px;
 }
+
+@import 'fork-theme';
