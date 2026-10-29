@@ -15,5 +15,9 @@ test('homepage shortcut pill describes itself and shows a tooltip on focus', asy
   await expect(description).toHaveText(/\S/);
 
   await pill.focus();
+  const text = await description.innerText();
   await expect(page.locator('.homepage-shortcut-tooltip')).toBeVisible();
+  await expect(page.locator('.homepage-shortcut-tooltip')).toContainText(
+    text.trim(),
+  );
 });
