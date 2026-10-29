@@ -1,0 +1,47 @@
+// Light-mode page chrome only. Dark mode keeps its surfaces and uses the
+// lighter primary from _variables.scss.
+$fork-page: #fff9f5;
+$fork-grain: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='g'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/><feColorMatrix type='saturate' values='0'/><feComponentTransfer><feFuncA type='linear' slope='0.05'/></feComponentTransfer></filter><rect width='100%' height='100%' filter='url(%23g)'/></svg>");
+
+@media screen {
+  body:not(.bp4-dark) {
+    background-color: $fork-page;
+    background-image: $fork-grain;
+    background-repeat: repeat;
+    background-attachment: scroll;
+
+    .dashboard__topbar,
+    .dashboard__actions-bar,
+    .navbar--dashboard-actions-bar,
+    .dashboard-content,
+    .dashboard__page,
+    .dashboard__page-content,
+    .dashboard__insider,
+    .dashboard__fallback-loading,
+    .page-form__header {
+      background-color: transparent;
+    }
+
+    .page-form__floating-actions {
+      background-color: $fork-page;
+    }
+
+    .bp4-card {
+      border-radius: 6px;
+      box-shadow: $pt-elevation-shadow-2;
+    }
+
+    .financial-sheet,
+    .dashboard__datatable,
+    .bigcapital-datatable {
+      background-color: #fff;
+    }
+  }
+}
+
+@media print {
+  body:not(.bp4-dark) {
+    background-color: #fff;
+    background-image: none;
+  }
+}

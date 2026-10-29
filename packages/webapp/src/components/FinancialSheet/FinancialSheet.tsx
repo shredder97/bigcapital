@@ -60,7 +60,7 @@ export function FinancialSheet({
     <FinancialSheetRoot
       $minimal={minimal}
       $fullWidth={fullWidth}
-      className={className}
+      className={className ? `financial-sheet ${className}` : 'financial-sheet'}
     >
       {hasHead && (
         <div>

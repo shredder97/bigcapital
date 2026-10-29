@@ -39,7 +39,11 @@ export function FinancialSheetSkeleton({
   skeletonTableColumns = defaultSkeletonColumns,
 }: FinancialSheetSkeletonProps) {
   return (
-    <FinancialSheetRoot $minimal={minimal} $fullWidth={fullWidth}>
+    <FinancialSheetRoot
+      $minimal={minimal}
+      $fullWidth={fullWidth}
+      className="financial-sheet"
+    >
       <FinancialSheetTitle>
         <SkeletonText charsLength={titleCharsLength} />
       </FinancialSheetTitle>
