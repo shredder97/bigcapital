@@ -39,6 +39,7 @@ describe('DisconnectPlaidItemOnAccountDeleted', () => {
   let tenantItems: Row[];
   let systemItems: Row[];
   let itemRemove: jest.Mock;
+  let systemDeleteFailure: unknown;
   let resolveCommit: () => void;
   let rejectCommit: (reason?: unknown) => void;
   let handle: () => Promise<void>;
@@ -48,6 +49,7 @@ describe('DisconnectPlaidItemOnAccountDeleted', () => {
     tenantItems = [{ id: 1, plaidItemId, plaidAccessToken: accessToken }];
     systemItems = [{ ...systemRow }];
     itemRemove = jest.fn().mockResolvedValue({});
+    systemDeleteFailure = undefined;
     const executionPromise = new Promise<void>((resolve, reject) => {
       resolveCommit = resolve;
       rejectCommit = reject;
@@ -58,7 +60,15 @@ describe('DisconnectPlaidItemOnAccountDeleted', () => {
       { itemRemove } as any,
       model(tenantItems) as any,
       model(accounts) as any,
-      { query: () => queryOf(systemItems) } as any,
+      {
+        query: () => {
+          const built = queryOf(systemItems);
+          if (systemDeleteFailure) {
+            built.delete = () => Promise.reject(systemDeleteFailure);
+          }
+          return built;
+        },
+      } as any,
     );
     handle = () =>
       subscriber.handleDisconnectPlaidItemOnAccountDelete({
@@ -115,5 +125,18 @@ describe('DisconnectPlaidItemOnAccountDeleted', () => {
     await settle();
     expect(itemRemove).not.toHaveBeenCalled();
     expect(systemItems).toEqual([systemRow]);
+  });
+
+  it('logs a system delete failure without the access token', async () => {
+    systemDeleteFailure = new Error(`system delete failed ${accessToken}`);
+    await expect(handle()).resolves.toBeUndefined();
+    resolveCommit();
+    await settle();
+    expect(itemRemove).not.toHaveBeenCalled();
+    const logged = JSON.stringify(
+      (Logger.prototype.error as jest.Mock).mock.calls,
+    );
+    expect(logged).toContain('[redacted]');
+    expect(logged).not.toContain(accessToken);
   });
 });

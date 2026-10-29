@@ -60,13 +60,13 @@ export class DisconnectPlaidItemOnAccountDeleted {
 
     // System row, then Plaid, after the tenant transaction commits.
     runAfterTransaction(trx, async () => {
-      await this.systemPlaidItemModel
-        .query()
-        .where('plaidItemId', plaidItemId)
-        .delete();
-      if (!accessToken) return;
-
       try {
+        await this.systemPlaidItemModel
+          .query()
+          .where('plaidItemId', plaidItemId)
+          .delete();
+        if (!accessToken) return;
+
         await this.plaidClient.itemRemove({ access_token: accessToken });
       } catch (error) {
         const detail = String((error as any)?.message ?? error);
