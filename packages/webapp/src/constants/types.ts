@@ -1,3 +1,4 @@
+import type { IconName } from '@blueprintjs/core';
 import type { ReactNode } from 'react';
 
 export interface PermissionOption {
@@ -14,7 +15,7 @@ export interface HomepageShortcutOption extends Partial<PermissionOption> {
   title: ReactNode;
   description: ReactNode;
   link: string;
-  icon: string;
+  icon: IconName;
 }
 
 export interface HomepageSectionOption {

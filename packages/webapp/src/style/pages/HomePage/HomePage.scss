@@ -21,14 +21,6 @@
     U+2212, U+2215, U+FEFF, U+FFFD;
 }
 
-.App:has(.dashboard__insider--homepage) {
-  min-width: 0;
-}
-
-.dashboard-content:has(.dashboard__insider--homepage) {
-  min-width: 0;
-}
-
 .homepage-shortcuts {
   --tint-sage: #e4efe2;
   --tint-lavender: #e7e1f2;
@@ -40,9 +32,7 @@
 
   box-sizing: border-box;
   width: 100%;
-  min-width: 0;
   padding: 16px 16px 40px;
-  background: none;
 
   .bp4-dark & {
     --tint-sage: #2c4034;
@@ -59,29 +49,16 @@
   }
 }
 
-.homepage-shortcuts__section {
-  background: none;
-  border: 0;
-  box-shadow: none;
-
-  & + & {
-    margin-top: 44px;
-  }
+.homepage-shortcuts__section + .homepage-shortcuts__section {
+  margin-top: 44px;
 }
 
 .homepage-shortcuts__title {
   margin: 0 0 16px;
-  padding: 0;
-  background: none;
-  border: 0;
-  box-shadow: none;
   color: var(--homepage-title);
   font-family: 'Instrument Serif', Georgia, serif;
   font-size: clamp(2rem, 4.2vw, 2.75rem);
-  font-style: normal;
-  font-synthesis: none;
   font-weight: 400;
-  letter-spacing: -0.015em;
   line-height: 1.12;
 }
 
@@ -90,17 +67,30 @@
   flex-wrap: wrap;
   align-items: center;
   gap: 10px;
-  min-width: 0;
 
-  > .bp4-popover-wrapper,
-  > .bp4-popover-target {
-    display: inline-flex;
-    width: auto;
-    max-width: 100%;
+  > :nth-child(5n + 1) {
+    --tint: var(--tint-sage);
+  }
+
+  > :nth-child(5n + 2) {
+    --tint: var(--tint-lavender);
+  }
+
+  > :nth-child(5n + 3) {
+    --tint: var(--tint-peach);
+  }
+
+  > :nth-child(5n + 4) {
+    --tint: var(--tint-blue);
+  }
+
+  > :nth-child(5n + 5) {
+    --tint: var(--tint-sand);
   }
 }
 
 a.homepage-pill {
+  position: relative;
   display: inline-flex;
   align-items: center;
   gap: 8px;
@@ -109,16 +99,14 @@ a.homepage-pill {
   padding: 8px 14px 8px 12px;
   border: 0;
   border-radius: 999px;
+  background: var(--tint);
   box-shadow:
     0 1px 2px rgba(48, 36, 24, 0.05),
     0 6px 14px rgba(48, 36, 24, 0.05);
   color: var(--pill-label);
   font-family: 'Inter Tight', system-ui, sans-serif;
   font-size: 14px;
-  font-style: normal;
-  font-synthesis: none;
   font-weight: 400;
-  letter-spacing: -0.01em;
   line-height: 1.25;
   text-decoration: none;
   cursor: pointer;
@@ -146,28 +134,16 @@ a.homepage-pill {
   }
 }
 
-a.homepage-pill.homepage-pill--sage {
-  background: var(--tint-sage);
-}
-
-a.homepage-pill.homepage-pill--lavender {
-  background: var(--tint-lavender);
-}
-
-a.homepage-pill.homepage-pill--peach {
-  background: var(--tint-peach);
-}
-
-a.homepage-pill.homepage-pill--blue {
-  background: var(--tint-blue);
-}
-
-a.homepage-pill.homepage-pill--sand {
-  background: var(--tint-sand);
-}
-
-.homepage-pill__label {
-  min-width: 0;
+.homepage-pill__description {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
 }
 
 .bp4-popover.bp4-tooltip.homepage-shortcut-tooltip {
@@ -183,7 +159,6 @@ a.homepage-pill.homepage-pill--sand {
     color: #243044;
     font-family: 'Inter Tight', system-ui, sans-serif;
     font-size: 13.5px;
-    font-synthesis: none;
     font-weight: 400;
     line-height: 1.45;
     white-space: normal;
