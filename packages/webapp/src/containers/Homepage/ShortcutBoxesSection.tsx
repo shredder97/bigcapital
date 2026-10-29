@@ -1,4 +1,5 @@
-import React from 'react';
+import { Icon, Tooltip } from '@blueprintjs/core';
+import { useId } from 'react';
 import { Link } from 'react-router-dom';
 import { useFilterShortcutBoxesSection } from './components';
 import type {
@@ -6,22 +7,31 @@ import type {
   HomepageShortcutOption,
 } from '@/constants/types';
 import { For } from '@/components';
-import '@/style/pages/FinancialStatements/FinancialSheets.scss';
 
-interface ShortcutBoxProps {
-  title: React.ReactNode;
-  link: string;
-  description: React.ReactNode;
-}
+function ShortcutPill({
+  title,
+  link,
+  description,
+  icon,
+}: HomepageShortcutOption) {
+  const tooltipId = useId();
 
-function ShortcutBox({ title, link, description }: ShortcutBoxProps) {
   return (
-    <div className={'financial-reports__item'}>
-      <Link className="title" to={link}>
-        {title}
+    <Tooltip
+      boundary="viewport"
+      content={description}
+      hoverOpenDelay={300}
+      openOnTargetFocus
+      popoverClassName="homepage-shortcut-tooltip"
+    >
+      <Link aria-describedby={tooltipId} className="homepage-pill" to={link}>
+        <Icon icon={icon} iconSize={15} />
+        <span className="homepage-pill__label">{title}</span>
+        <span className="homepage-pill__description" id={tooltipId}>
+          {description}
+        </span>
       </Link>
-      <p className="desc">{description}</p>
-    </div>
+    </Tooltip>
   );
 }
 
@@ -32,12 +42,14 @@ interface ShortcutBoxesProps {
 
 function ShortcutBoxes({ sectionTitle, shortcuts }: ShortcutBoxesProps) {
   return (
-    <div className="financial-reports__section">
-      <div className="section-title">{sectionTitle}</div>
-      <div className="financial-reports__list">
-        <For render={ShortcutBox} of={shortcuts} />
+    <section className="homepage-shortcuts__section">
+      <h2 className="homepage-shortcuts__title">{sectionTitle}</h2>
+      <div className="homepage-shortcuts__list">
+        {shortcuts.map((shortcut) => (
+          <ShortcutPill key={shortcut.link} {...shortcut} />
+        ))}
       </div>
-    </div>
+    </section>
   );
 }
 
