@@ -1,11 +1,11 @@
-import { Logger, Inject, Injectable } from '@nestjs/common';
 import { OnEvent } from '@nestjs/event-emitter';
-import { PlaidApi } from 'plaid';
-import { events } from '@/common/events/events';
+import { Inject, Injectable, Logger } from '@nestjs/common';
 import { IAccountEventDeletedPayload } from '@/interfaces/Account';
-import { Account } from '@/modules/Accounts/models/Account.model';
+import { events } from '@/common/events/events';
 import { PlaidItem } from '@/modules/BankingPlaid/models/PlaidItem';
 import { SystemPlaidItem } from '@/modules/BankingPlaid/models/SystemPlaidItem';
+import { Account } from '@/modules/Accounts/models/Account.model';
+import { PlaidApi } from 'plaid';
 import { PLAID_CLIENT } from '@/modules/Plaid/Plaid.module';
 import { TenantModelProxy } from '@/modules/System/models/TenantBaseModel';
 import { runAfterTransaction } from '@/modules/Tenancy/TenancyDB/TransactionsHooks';
@@ -30,9 +30,7 @@ export class DisconnectPlaidItemOnAccountDeleted {
   ) {}
 
   /**
-   * Unlinks the deleted account from Plaid.
-   * The Plaid item is removed only when no other account still uses it.
-   * `itemRemove` runs after the tenant transaction commits.
+   * Removes the Plaid item after commit when no sibling account still uses it.
    * @param {IAccountEventDeletedPayload} payload
    * @returns {Promise<void>}
    */
@@ -43,64 +41,35 @@ export class DisconnectPlaidItemOnAccountDeleted {
   }: IAccountEventDeletedPayload) {
     // Can't continue if the deleted account is not linked to Plaid item.
     const plaidItemId = oldAccount.plaidItemId;
-
     if (!plaidItemId) return;
 
-    // Unlink only the account that was deleted.
-    await this.accountModel().query(trx).findById(oldAccount.id).patch({
-      plaidAccountId: null,
-      plaidItemId: null,
-    });
-
-    // Keep the item while any sibling account still references it.
     const remainingLinkedAccounts = await this.accountModel()
       .query(trx)
       .where('plaidItemId', plaidItemId)
       .whereNot('id', oldAccount.id)
       .resultSize();
-
     if (remainingLinkedAccounts > 0) return;
 
-    const oldPlaidItem = await this.plaidItemModel()
-      .query(trx)
-      .findOne('plaidItemId', plaidItemId);
-
-    // Remove the Plaid item from the tenant database.
+    const accessToken = (
+      await this.plaidItemModel().query(trx).findOne('plaidItemId', plaidItemId)
+    )?.plaidAccessToken;
     await this.plaidItemModel()
       .query(trx)
-      .findOne('plaidItemId', plaidItemId)
+      .where('plaidItemId', plaidItemId)
       .delete();
 
-    // Linking inserts the same item id on the system database.
-    const systemPlaidItem = await this.systemPlaidItemModel
-      .query()
-      .findOne('plaidItemId', plaidItemId);
-
-    if (systemPlaidItem) {
+    // System row, then Plaid, after the tenant transaction commits.
+    runAfterTransaction(trx, async () => {
       await this.systemPlaidItemModel
         .query()
-        .findOne('plaidItemId', plaidItemId)
+        .where('plaidItemId', plaidItemId)
         .delete();
-    }
+      if (!accessToken) return;
 
-    const accessToken = oldPlaidItem?.plaidAccessToken;
-
-    if (!accessToken) return;
-
-    // Remove the Plaid item once the transaction commits.
-    runAfterTransaction(trx, async () => {
       try {
-        await this.plaidClient.itemRemove({
-          access_token: accessToken,
-        });
+        await this.plaidClient.itemRemove({ access_token: accessToken });
       } catch (error) {
-        const detail =
-          error instanceof Error
-            ? error.message
-            : typeof error === 'string'
-              ? error
-              : 'unknown error';
-
+        const detail = String((error as any)?.message ?? error);
         this.logger.error(
           `Failed to remove Plaid item ${plaidItemId} after account delete: ${detail
             .split(accessToken)
