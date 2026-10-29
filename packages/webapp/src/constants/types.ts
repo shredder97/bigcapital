@@ -13,7 +13,7 @@ export interface MenuItemOption {
 
 export interface HomepageShortcutOption extends Partial<PermissionOption> {
   title: ReactNode;
-  description: ReactNode;
+  description: JSX.Element;
   link: string;
   icon: IconName;
 }

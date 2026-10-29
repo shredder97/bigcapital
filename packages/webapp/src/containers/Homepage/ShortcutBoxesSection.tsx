@@ -1,5 +1,5 @@
 import { Icon, Tooltip } from '@blueprintjs/core';
-import React, { useId } from 'react';
+import { useId } from 'react';
 import { Link } from 'react-router-dom';
 import { useFilterShortcutBoxesSection } from './components';
 import type {
@@ -7,14 +7,6 @@ import type {
   HomepageShortcutOption,
 } from '@/constants/types';
 import { For } from '@/components';
-
-function tooltipContent(description: React.ReactNode) {
-  if (React.isValidElement(description)) {
-    return React.cloneElement(description);
-  }
-
-  return <>{description}</>;
-}
 
 function ShortcutPill({
   title,
@@ -27,7 +19,7 @@ function ShortcutPill({
   return (
     <Tooltip
       boundary="viewport"
-      content={tooltipContent(description)}
+      content={description}
       hoverOpenDelay={300}
       openOnTargetFocus
       popoverClassName="homepage-shortcut-tooltip"
