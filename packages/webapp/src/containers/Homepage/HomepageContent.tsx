@@ -7,7 +7,7 @@ import '@/style/pages/HomePage/HomePage.scss';
 
 export function HomepageContent() {
   return (
-    <div className="financial-reports">
+    <div className="homepage-shortcuts">
       <AccountsReceivableSection />
       <AccountsPayableSection />
       <FinancialAccountingSection />

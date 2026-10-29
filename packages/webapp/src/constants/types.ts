@@ -14,6 +14,7 @@ export interface HomepageShortcutOption extends Partial<PermissionOption> {
   title: ReactNode;
   description: ReactNode;
   link: string;
+  icon: string;
 }
 
 export interface HomepageSectionOption {

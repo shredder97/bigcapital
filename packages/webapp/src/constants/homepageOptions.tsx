@@ -24,6 +24,7 @@ export const accountsReceivable: HomepageSectionOption[] = [
     shortcuts: [
       {
         title: <T id={'sales_invoices'} />,
+        icon: 'document',
         description: <T id={'tracking_sales_invoices_with_your_customers'} />,
         link: '/invoices',
         subject: AbilitySubject.Invoice,
@@ -31,6 +32,7 @@ export const accountsReceivable: HomepageSectionOption[] = [
       },
       {
         title: <T id={'sales_estimates'} />,
+        icon: 'clipboard',
         description: <T id={'manage_your_sales_estimates_to_create_quotes'} />,
         link: '/estimates',
         subject: AbilitySubject.Estimate,
@@ -38,6 +40,7 @@ export const accountsReceivable: HomepageSectionOption[] = [
       },
       {
         title: <T id={'sales_receipts'} />,
+        icon: 'credit-card',
         description: <T id={'manage_sales_receipts_for_sales_that_get_paid'} />,
         link: '/receipts',
         subject: AbilitySubject.Receipt,
@@ -45,6 +48,7 @@ export const accountsReceivable: HomepageSectionOption[] = [
       },
       {
         title: <T id={'customers'} />,
+        icon: 'person',
         description: <T id={'manage_the_customers_relations_with_customer'} />,
         link: '/customers',
         subject: AbilitySubject.Customer,
@@ -52,6 +56,7 @@ export const accountsReceivable: HomepageSectionOption[] = [
       },
       {
         title: <T id={'customers_payments'} />,
+        icon: 'bank-account',
         description: (
           <T id={'manage_payment_transactions_from_your_customers'} />
         ),
@@ -69,6 +74,7 @@ export const accountsPayable: HomepageSectionOption[] = [
     shortcuts: [
       {
         title: <T id={'purchase_invoices'} />,
+        icon: 'document',
         description: (
           <T id={'manage_the_purchase_invoices_with_your_vendors'} />
         ),
@@ -78,6 +84,7 @@ export const accountsPayable: HomepageSectionOption[] = [
       },
       {
         title: <T id={'vendors'} />,
+        icon: 'person',
         description: (
           <T id={'manage_the_vendors_relations_with_vendor_relations'} />
         ),
@@ -87,6 +94,7 @@ export const accountsPayable: HomepageSectionOption[] = [
       },
       {
         title: <T id={'vendors_payments'} />,
+        icon: 'bank-account',
         description: <T id={'manage_payments_transactions_to_your_vendors'} />,
         link: '/payments-made',
         subject: AbilitySubject.PaymentMade,
@@ -102,6 +110,7 @@ export const financialAccounting: HomepageSectionOption[] = [
     shortcuts: [
       {
         title: <T id={'chart_of_accounts'} />,
+        icon: 'book',
         description: (
           <T
             id={
@@ -115,6 +124,7 @@ export const financialAccounting: HomepageSectionOption[] = [
       },
       {
         title: <T id={'manual_journal'} />,
+        icon: 'edit',
         description: (
           <T id={'manage_manual_journal_transactions_on_accounts'} />
         ),
@@ -124,6 +134,7 @@ export const financialAccounting: HomepageSectionOption[] = [
       },
       {
         title: <T id={'expenses'} />,
+        icon: 'dollar',
         description: (
           <T id={'track_your_indirect_expenses_under_specific_categories'} />
         ),
@@ -133,6 +144,7 @@ export const financialAccounting: HomepageSectionOption[] = [
       },
       {
         title: <T id={'financial_statements'} />,
+        icon: 'chart',
         description: (
           <T id={'show_financial_reports_about_your_organization'} />
         ),
@@ -150,6 +162,7 @@ export const productsServices: HomepageSectionOption[] = [
     shortcuts: [
       {
         title: <T id={'products_services'} />,
+        icon: 'cube',
         description: (
           <T id={'manage_your_products_inventory_or_non_inventory'} />
         ),
@@ -159,11 +172,13 @@ export const productsServices: HomepageSectionOption[] = [
       },
       {
         title: <T id={'products_services_categories'} />,
+        icon: 'folder-close',
         description: <T id={'group_your_products_and_service'} />,
         link: 'items/categories',
       },
       {
         title: <T id={'inventory_adjustments'} />,
+        icon: 'changes',
         description: (
           <T id={'manage_your_inventory_adjustment_of_inventory_items'} />
         ),
