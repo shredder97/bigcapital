@@ -13,6 +13,7 @@ import { PlaidItem } from '@/modules/BankingPlaid/models/PlaidItem';
 import { UncategorizedBankTransaction } from '@/modules/BankingTransactions/models/UncategorizedBankTransaction';
 import { RemovePendingUncategorizedTransaction } from '@/modules/BankingTransactions/commands/RemovePendingUncategorizedTransaction.service';
 import { DecrementUncategorizedTransactionOnCategorizeSubscriber } from '@/modules/BankingTransactions/subscribers/DecrementUncategorizedTransactionOnCategorize';
+import { ServiceError } from '@/modules/Items/ServiceError';
 import { UnitOfWork } from '@/modules/Tenancy/TenancyDB/UnitOfWork.service';
 
 /**
@@ -83,6 +84,7 @@ describe('Plaid sync counter on a tenant database', () => {
   let updater: PlaidUpdateTransactions;
   let plaidSync: PlaidSyncDb;
   let create: CreateUncategorizedTransactionService;
+  let remove: RemovePendingUncategorizedTransaction;
 
   beforeAll(async () => {
     const admin = Knex({ client: 'mysql', connection: dbConnection() });
@@ -114,7 +116,7 @@ describe('Plaid sync counter on a tenant database', () => {
       emitter,
       (() => UncategorizedBankTransaction) as any,
     );
-    const remove = new RemovePendingUncategorizedTransaction(
+    remove = new RemovePendingUncategorizedTransaction(
       emitter,
       uow,
       (() => UncategorizedBankTransaction) as any,
@@ -322,6 +324,36 @@ describe('Plaid sync counter on a tenant database', () => {
 
     expect(await UncategorizedBankTransaction.query()).toHaveLength(0);
     expect(await counter()).toBe(0);
+  });
+
+  it('throws when removeUncategorizedTransaction is called on a booked row and leaves the row and counter unchanged', async () => {
+    const account = await Account.query().findOne({
+      plaidAccountId: PLAID_ACCOUNT,
+    });
+    await Account.query()
+      .findById(account.id)
+      .patch({ uncategorizedTransactions: 1 } as any);
+    const stored = await UncategorizedBankTransaction.query().insert({
+      date: '2026-10-28',
+      amount: -12.34,
+      currencyCode: 'USD',
+      accountId: account.id,
+      plaidTransactionId: 'posted-booked',
+      pending: false,
+      categorized: true,
+      description: 'booked',
+    } as any);
+
+    await expect(
+      remove.removeUncategorizedTransaction(stored.id),
+    ).rejects.toBeInstanceOf(ServiceError);
+
+    const rows = await UncategorizedBankTransaction.query().where(
+      'plaidTransactionId',
+      'posted-booked',
+    );
+    expect(rows).toHaveLength(1);
+    expect(await counter()).toBe(1);
   });
 
   it('keeps a booked posted row and does not change the counter when Plaid removes it', async () => {
