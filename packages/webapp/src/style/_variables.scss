@@ -4,7 +4,7 @@
 $ns: bp4;
 
 :root {
-  --color-primary: #0047ab;
+  --color-primary: #7C5CBF;
   --color-danger: red;
 
   // Green colors
@@ -125,8 +125,7 @@ $ns: bp4;
   --color-datatable-head-border: #d2dce2;
   --color-datatable-cell-hover-background: #f5f6f7;
   --color-datatable-cell-border: #d8d8d8;
-  --color-datatable-cell-focus-border: rgba(0, 71, 171, 0.6);
-  --color-datatable-cell-focus-border: rgba(0, 71, 171, 0.6);
+  --color-datatable-cell-focus-border: var(--color-primary);
   --color-datatable-no-results-text: #777;
   --color-datatable-no-results-text: #777;
   --color-datatable-caret: #b5b5b5;
@@ -142,7 +141,7 @@ $ns: bp4;
 
   // Sidebar
   --color-sidebar-toggle: #6b8193;
-  --color-sidebar-background: #01115e;
+  --color-sidebar-background: #2A1145;
   --color-sidebar-text: #fff;
   --color-sidebar-scrollbars-background: rgba(255, 255, 255, 0.25);
   
@@ -185,7 +184,7 @@ $ns: bp4;
   --color-bank-account-card-background: #fff;
   --color-bank-account-card-text: rgb(23, 43, 77);
   --color-bank-account-card-border: #c8cad0;
-  --color-bank-account-card-hover-border: #0047ab;
+  --color-bank-account-card-hover-border: var(--color-primary);
 
   --color-bank-account-card-tag-background: rgb(223, 225, 230);
   --color-bank-account-code-text: rgb(23, 43, 77);
@@ -267,10 +266,10 @@ $ns: bp4;
   // Content tabs
   --color-content-tab-background: #fff;
   --color-content-tab-border: #e1e2e8;
-  --color-content-tab-hover-border: #0047ab;
-  --color-content-tab-active-border: #0047ab;
+  --color-content-tab-hover-border: var(--color-primary);
+  --color-content-tab-active-border: var(--color-primary);
   --color-content-tab-text: #2f343c;
-  --color-content-tab-active-text: #0047ab;
+  --color-content-tab-active-text: var(--color-primary);
 
   // Aside
   --color-aside-background: #fff;
@@ -290,7 +289,7 @@ $ns: bp4;
   --color-stepper-step-description-text: #738091;
   --color-stepper-step-description-active-text: var(--color-primary);
   --color-stepper-step-background: #9e9e9e;
-  --color-stepper-step-active-background: #0047ab;
+  --color-stepper-step-active-background: var(--color-primary);
   --color-stepper-separator: #c5cbd3;
   --color-stepper-step-text: #fff;  
 
@@ -316,7 +315,7 @@ $pt-popover-box-shadow:
   0 8px 24px rgba(16, 22, 26, 0.1);
   
 body.bp4-dark  {
-  --color-primary: #9dbbf0;
+  --color-primary: #C8B8EC;
   --color-danger: rgb(213, 103, 103);
 
   // Green colors (dark mode - lighter variants)
@@ -437,7 +436,6 @@ body.bp4-dark  {
   --color-datatable-head-border: var(--color-dark-gray4);
   --color-datatable-cell-hover-background: var(--color-dark-gray3);
   --color-datatable-cell-border: var(--color-dark-gray4);
-  --color-datatable-cell-focus-border: rgba(157, 187, 240, 0.6);
   --color-datatable-cell-focus-border: var(--color-primary);
   --color-datatable-no-results-text: #777;
   --color-datatable-no-results-text: rgba(255, 255, 255, 0.5);
@@ -500,7 +498,6 @@ body.bp4-dark  {
   --color-bank-account-card-text: var(--color-light-gray5);
   --color-bank-account-card-border: #c8cad0;
   --color-bank-account-card-border: rgba(255, 255, 255, 0.2);
-  --color-bank-account-card-hover-border: #9dbbf0;
 
   --color-bank-account-card-tag-background: rgb(223, 225, 230);
   --color-bank-account-card-tag-background: rgba(255, 255, 255, 0.2);
@@ -592,7 +589,6 @@ body.bp4-dark  {
   --color-content-tab-active-border: var(--color-primary);
   --color-content-tab-text: #2f343c;
   --color-content-tab-text: var(--color-light-gray1);
-  --color-content-tab-active-text: #1552c8;
   --color-content-tab-active-text: var(--color-light-gray1);
 
   // Aside
@@ -647,16 +643,16 @@ $pt-popover-box-shadow:
 $blue1: #0069ff;
 $blue2: #0052ff;
 
-$fork-primary: #0047ab;
-$fork-primary-hover: #003d94;
-$fork-primary-pressed: #00337d;
-$fork-dark-text: #9dbbf0;
+$fork-primary: #7C5CBF;
+$fork-primary-hover: #6B47B5;
+$fork-primary-pressed: #5E3F9F;
+$fork-dark-text: #C8B8EC;
 
 $blue3: $fork-primary;
 
 $pt-link-color: $fork-primary;
 $pt-intent-primary: $fork-primary;
-$pt-outline-color: rgba(0, 71, 171, 0.6);
+$pt-outline-color: rgba(124, 92, 191, 0.6);
 $pt-icon-color-selected: $fork-primary;
 $pt-dark-link-color: $fork-dark-text;
 $pt-dark-icon-color-selected: $fork-dark-text;
@@ -708,7 +704,7 @@ $sidebar-text-color: var(--sidebar-text-color);
 $sidebar-width: 100%;
 $sidebar-menu-item-color: var(--color-sidebar-menu-item-color);
 $sidebar-menu-item-color-active: var(--color-sidebar-menu-item-active-color);
-$sidebar-popover-submenu-bg: rgb(1, 20, 62);
+$sidebar-popover-submenu-bg: #2A1145;
 $sidebar-menu-label-color: var(--color-sidebar-menu-label-color);
 $sidebar-submenu-item-color: rgba(255, 255, 255, 0.85);
 $sidebar-submenu-item-hover-color: rgb(255, 255, 255);

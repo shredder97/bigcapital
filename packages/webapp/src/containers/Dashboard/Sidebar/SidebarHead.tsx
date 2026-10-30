@@ -13,6 +13,7 @@ import { useMemo, useState } from 'react';
 import intl from 'react-intl-universal';
 import type { ComponentType } from 'react';
 import { Icon, IconProps, FormattedMessage as T } from '@/components';
+import { BrandMark } from '@/components/BrandMark';
 import { DRAWERS } from '@/constants/drawers';
 import {
   withDrawerActions,
@@ -338,12 +339,7 @@ function SidebarHeadJSX({
       </div>
 
       <div className="sidebar__head-logo">
-        <Icon
-          icon={'mini-bigcapital'}
-          width={28}
-          height={28}
-          className="bigcapital--alt"
-        />
+        <BrandMark className="brand-mark--sm" />
       </div>
     </div>
   );

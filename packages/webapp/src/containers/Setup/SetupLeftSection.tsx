@@ -1,4 +1,5 @@
-import { Icon, For, FormattedMessage as T } from '@/components';
+import { For, FormattedMessage as T } from '@/components';
+import { BrandMark } from '@/components/BrandMark';
 import { getFooterLinks } from '@/constants/footerLinks';
 import { useAuthActions } from '@/hooks/state';
 
@@ -71,12 +72,7 @@ export function SetupLeftSection() {
     <section className={'setup-page__left-section'}>
       <div className={'content'}>
         <div className={'content__logo'}>
-          <Icon
-            icon="bigcapital"
-            className={'bigcapital--alt'}
-            height={37}
-            width={190}
-          />
+          <BrandMark />
         </div>
         <SetupLeftSectionHeader />
         <SetupLeftSectionFooter />

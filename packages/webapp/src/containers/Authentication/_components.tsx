@@ -50,14 +50,6 @@ export const AuthInsiderCopyright = styled.div`
   font-size: 12px;
   color: #666;
   margin-top: 1.2rem;
-
-  .bp4-icon-bigcapital {
-    svg {
-      path {
-        fill: #a3a3a3;
-      }
-    }
-  }
 `;
 
 export const AuthFooterLinks = styled.div`
