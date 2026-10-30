@@ -241,13 +241,6 @@ $ns: bp4;
   --color-transaction-locking-item-icon-border: #d1dee2;
   --color-transaction-locking-item-enabled-border: #d1dee2;
 
-  // Reports items.
-  --color-report-section-title-text: rgb(31, 50, 85);
-  --color-report-item-background: #fff;
-  --color-report-item-border: #d1dee2;
-  --color-report-item-top-border: #d1dee2;
-  --color-report-item-text: rgb(31, 50, 85);
-
   // Financial report drawer.
   --color-financial-report-drawer-tab-text: #333;
 
@@ -564,13 +557,6 @@ body.bp4-dark  {
   --color-transaction-locking-item-border: var(--color-dark-gray3);
   --color-transaction-locking-item-icon-border: var(--color-dark-gray5);
   --color-transaction-locking-item-enabled-border: var(--color-dark-gray5);
-
-  // Reports items.
-  --color-report-section-title-text: var(--color-light-gray1);
-  --color-report-item-background: var(--color-dark-gray3);
-  --color-report-item-border: var(--color-dark-gray5);
-  --color-report-item-top-border: var(--color-dark-gray5);
-  --color-report-item-text: var(--color-light-gray2);
 
   // Financial report drawer.
   --color-financial-report-drawer-tab-text: var(--color-light-gray3);
