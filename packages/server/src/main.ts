@@ -5,6 +5,7 @@ import * as path from 'path';
 import './utils/moment-mysql';
 import { AppModule } from './modules/App/App.module';
 import { NestExpressApplication } from '@nestjs/platform-express';
+import { trustProxyHops } from './common/trust-proxy';
 
 global.__public_dirname = path.join(__dirname, '..', 'public');
 global.__static_dirname = path.join(__dirname, '../static');
@@ -20,7 +21,7 @@ async function bootstrap() {
 
   // Railway: edge + nginx (proxy service config in Railway var NGINX_CONF_B64, outside repo) = 2 hops.
   // Update TRUST_PROXY_HOPS if the proxy chain changes. Never use `true` (trusts spoofable XFF).
-  const hops = parseInt(process.env.TRUST_PROXY_HOPS ?? '0', 10);
+  const hops = trustProxyHops();
   if (hops > 0) app.set('trust proxy', hops);
 
   // create and mount the middleware manually here
