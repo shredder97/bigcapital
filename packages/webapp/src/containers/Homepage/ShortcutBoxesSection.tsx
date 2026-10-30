@@ -8,7 +8,7 @@ import type {
 } from '@/constants/types';
 import { For } from '@/components';
 
-function ShortcutPill({
+export function ShortcutPill({
   title,
   link,
   description,
@@ -25,7 +25,7 @@ function ShortcutPill({
       popoverClassName="homepage-shortcut-tooltip"
     >
       <Link aria-describedby={tooltipId} className="homepage-pill" to={link}>
-        <Icon icon={icon} iconSize={15} />
+        {icon && <Icon icon={icon} iconSize={15} />}
         <span className="homepage-pill__label">{title}</span>
         <span className="homepage-pill__description" id={tooltipId}>
           {description}
@@ -40,7 +40,7 @@ interface ShortcutBoxesProps {
   shortcuts: HomepageShortcutOption[];
 }
 
-function ShortcutBoxes({ sectionTitle, shortcuts }: ShortcutBoxesProps) {
+export function ShortcutBoxes({ sectionTitle, shortcuts }: ShortcutBoxesProps) {
   return (
     <section className="homepage-shortcuts__section">
       <h2 className="homepage-shortcuts__title">{sectionTitle}</h2>

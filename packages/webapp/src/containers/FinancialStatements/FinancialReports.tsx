@@ -1,59 +1,27 @@
-import React from 'react';
-import { Link } from 'react-router-dom';
 import { useFilterFinancialReports } from './FilterFinancialReports';
-import { For, DashboardInsider } from '@/components';
+import { DashboardInsider } from '@/components';
 import { financialReportMenus } from '@/constants/financialReportsMenu';
+import { ShortcutBoxes } from '@/containers/Homepage/ShortcutBoxesSection';
 
-import '@/style/pages/FinancialStatements/FinancialSheets.scss';
-
-interface FinancialReportsItemProps {
-  title: React.ReactNode;
-  desc: React.ReactNode;
-  link: string;
-}
-
-function FinancialReportsItem({
-  title,
-  desc,
-  link,
-}: FinancialReportsItemProps) {
-  return (
-    <div className="financial-reports__item">
-      <Link className="title" to={link}>
-        {title}
-      </Link>
-      <p className="desc">{desc}</p>
-    </div>
-  );
-}
-
-interface FinancialReportsSectionProps {
-  sectionTitle: React.ReactNode;
-  reports: FinancialReportsItemProps[];
-}
-
-function FinancialReportsSection({
-  sectionTitle,
-  reports,
-}: FinancialReportsSectionProps) {
-  return (
-    <div className="financial-reports__section">
-      <div className="section-title">{sectionTitle}</div>
-
-      <div className="financial-reports__list">
-        <For render={FinancialReportsItem} of={reports} />
-      </div>
-    </div>
-  );
-}
+import '@/style/pages/HomePage/HomePage.scss';
 
 export function FinancialReports() {
   const financialReportMenu = useFilterFinancialReports(financialReportMenus);
 
   return (
     <DashboardInsider name={'financial-reports'}>
-      <div className="financial-reports">
-        <For render={FinancialReportsSection} of={financialReportMenu} />
+      <div className="homepage-shortcuts">
+        {financialReportMenu.map(({ sectionTitle, reports }, index) => (
+          <ShortcutBoxes
+            key={index}
+            sectionTitle={sectionTitle}
+            shortcuts={reports.map(({ title, desc, link }) => ({
+              title,
+              link,
+              description: <>{desc}</>,
+            }))}
+          />
+        ))}
       </div>
     </DashboardInsider>
   );
