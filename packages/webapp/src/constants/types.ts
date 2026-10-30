@@ -15,7 +15,7 @@ export interface HomepageShortcutOption extends Partial<PermissionOption> {
   title: ReactNode;
   description: JSX.Element;
   link: string;
-  icon: IconName;
+  icon?: IconName;
 }
 
 export interface HomepageSectionOption {
