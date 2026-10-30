@@ -2,6 +2,7 @@ import {
   Body,
   Controller,
   Get,
+  Logger,
   Param,
   Post,
   Request,
@@ -56,6 +57,12 @@ export class AuthController {
     @Request() req: Request & { user: SystemUser },
     @Body() signinDto: AuthSigninDto,
   ): Promise<AuthSigninResponseDto> {
+    // TEMP #7 QC - remove before merge
+    const qcReq = req as { ip?: string; ips?: string[] };
+    Logger.log(
+      `signin req.ip=${qcReq.ip} req.ips=${JSON.stringify(qcReq.ips)}`,
+    );
+
     const { user } = req;
     const tenant = await this.authSignin.resolveSigninTenant(user);
 
