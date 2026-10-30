@@ -8,14 +8,10 @@ import {
   signInUser,
 } from './_auth';
 import {
-  assertableHrefs,
-  isWithheldFromRestrictedRole,
-  loadFinancialReportMenus,
-  rolePermissionsFor,
-  visibleSections,
-  type ReportMenuItem,
-  type ReportMenuSection,
-} from './financialReportMenu';
+  financialReportMenuData,
+  type FinancialReportMenuItem,
+  type FinancialReportMenuSection,
+} from '../packages/webapp/src/constants/financialReportsMenu.data';
 
 const require = createRequire(path.join(process.cwd(), 'package.json'));
 const API_BASE = process.env.PLAYWRIGHT_TEST_API_URL || 'http://localhost:3000';
@@ -73,9 +69,74 @@ async function featureMap(auth: ApiAuth): Promise<Record<string, boolean>> {
   return map;
 }
 
+function isQueryLink(link: string): boolean {
+  return link.includes('?');
+}
+
+function isWithheldFromRestrictedRole(report: FinancialReportMenuItem): boolean {
+  return report.subject === 'AuditLog' || report.link.endsWith('/journal-sheet');
+}
+
+function featureAllows(
+  report: FinancialReportMenuItem,
+  features: Record<string, boolean>,
+): boolean {
+  return !report.feature || features[report.feature] === true;
+}
+
+function visibleSections(
+  sections: FinancialReportMenuSection[],
+  can: (report: FinancialReportMenuItem) => boolean,
+  features: Record<string, boolean>,
+): FinancialReportMenuSection[] {
+  return sections
+    .map((section) => ({
+      ...section,
+      reports: section.reports.filter(
+        (report) => featureAllows(report, features) && can(report),
+      ),
+    }))
+    .filter((section) => section.reports.length > 0);
+}
+
+function assertableHrefs(sections: FinancialReportMenuSection[]): string[] {
+  return sections.flatMap((section) =>
+    section.reports
+      .filter((report) => !isQueryLink(report.link))
+      .map((report) => report.link),
+  );
+}
+
+function rolePermissionsFor(
+  sections: FinancialReportMenuSection[],
+  include: (report: FinancialReportMenuItem) => boolean,
+): Array<{ subject: string; ability: string; value: true }> {
+  const seen = new Set<string>();
+  const permissions: Array<{ subject: string; ability: string; value: true }> =
+    [];
+  for (const section of sections) {
+    for (const report of section.reports) {
+      if (!include(report)) {
+        continue;
+      }
+      const key = `${report.subject}\0${report.ability}`;
+      if (seen.has(key)) {
+        continue;
+      }
+      seen.add(key);
+      permissions.push({
+        subject: report.subject,
+        ability: report.ability,
+        value: true,
+      });
+    }
+  }
+  return permissions;
+}
+
 async function expectReportPills(
   page: import('@playwright/test').Page,
-  sections: ReportMenuSection[],
+  sections: FinancialReportMenuSection[],
 ) {
   const rendered = page.locator('section.homepage-shortcuts__section');
   await expect(rendered).toHaveCount(sections.length);
@@ -102,7 +163,7 @@ async function expectReportPills(
 test('financial reports index renders the menu pills the user is allowed to open', async ({
   page,
 }) => {
-  const menu = await loadFinancialReportMenus();
+  const menu = financialReportMenuData;
   const features = await featureMap(readApiAuth());
   const sections = visibleSections(menu, () => true, features);
 
@@ -173,7 +234,7 @@ test('a role without audit log or journal access sees only its pills and no empt
   browser,
   baseURL,
 }) => {
-  const menu = await loadFinancialReportMenus();
+  const menu = financialReportMenuData;
   const admin = readApiAuth();
   const credentials = generateCredentials();
   credentials.password = 'E2eReports1!';
@@ -185,7 +246,7 @@ test('a role without audit log or journal access sees only its pills and no empt
       role_description: 'e2e role without audit log or journal',
       permissions: rolePermissionsFor(
         menu,
-        (report: ReportMenuItem) => !isWithheldFromRestrictedRole(report),
+        (report) => !isWithheldFromRestrictedRole(report),
       ),
     }),
   });
