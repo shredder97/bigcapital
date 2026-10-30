@@ -18,6 +18,11 @@ async function bootstrap() {
   app.set('query parser', 'extended');
   app.setGlobalPrefix('/api');
 
+  // Railway: edge + nginx (proxy service config in Railway var NGINX_CONF_B64, outside repo) = 2 hops.
+  // Update TRUST_PROXY_HOPS if the proxy chain changes. Never use `true` (trusts spoofable XFF).
+  const hops = parseInt(process.env.TRUST_PROXY_HOPS ?? '0', 10);
+  if (hops > 0) app.set('trust proxy', hops);
+
   // create and mount the middleware manually here
   app.use(new ClsMiddleware({}).use);
 
