@@ -134,16 +134,18 @@ describe('PlaidSyncDb transactions', () => {
     });
     const remove = jest.fn(async (id: number) => {
       const index = rows.findIndex((row) => row.id === id);
-      if (!rows[index]?.pending) {
-        throw new Error('TRANSACTION_NOT_PENDING');
+      if (index >= 0) {
+        rows.splice(index, 1);
       }
-      rows.splice(index, 1);
     });
     const accounts = [{ id: 7, plaidAccountId: 'plaid-acc' }];
     const sync = new PlaidSyncDb(
       {} as any,
       { create } as any,
-      { removePendingTransaction: remove } as any,
+      {
+        removePendingTransaction: remove,
+        removeUncategorizedTransaction: remove,
+      } as any,
       { emitAsync: jest.fn().mockResolvedValue([]) } as any,
       modelOf(accounts) as any,
       modelOf(items) as any,
@@ -318,7 +320,7 @@ describe('PlaidSyncDb transactions', () => {
     expect(warn).toHaveBeenCalledWith(expect.stringContaining('posted-1'));
   });
 
-  it('skips a removed booked or non-pending row and still saves the cursor', async () => {
+  it('deletes an untouched posted row, skips a booked row, and saves the cursor', async () => {
     const rows = [
       bankRow({
         id: 1,
@@ -385,14 +387,12 @@ describe('PlaidSyncDb transactions', () => {
       removedCount: 3,
     });
 
-    expect(remove).toHaveBeenCalledTimes(1);
+    expect(remove).toHaveBeenCalledTimes(2);
+    expect(remove).toHaveBeenCalledWith(2, expect.anything());
     expect(remove).toHaveBeenCalledWith(3, expect.anything());
-    expect(rows.map((row) => row.plaidTransactionId)).toEqual([
-      'booked-1',
-      'posted-1',
-    ]);
+    expect(rows.map((row) => row.plaidTransactionId)).toEqual(['booked-1']);
     expect(items[0].lastCursor).toBe('cursor-next');
     expect(warn).toHaveBeenCalledWith(expect.stringContaining('booked-1'));
-    expect(warn).toHaveBeenCalledWith(expect.stringContaining('posted-1'));
+    expect(warn).not.toHaveBeenCalledWith(expect.stringContaining('posted-1'));
   });
 });

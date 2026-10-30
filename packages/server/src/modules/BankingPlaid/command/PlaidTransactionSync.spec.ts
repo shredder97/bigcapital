@@ -470,18 +470,13 @@ describe('planPlaidRemovals', () => {
     ).toEqual([{ type: 'delete', id: 5 }]);
   });
 
-  it('skips a removed id whose row is not pending', () => {
+  it('deletes an untouched posted row', () => {
     expect(
       planPlaidRemovals(
         ['posted-1'],
         [row({ id: 2, plaidTransactionId: 'posted-1', pending: false })],
       ),
-    ).toEqual([
-      {
-        type: 'skip',
-        message: 'Skipping removal of Plaid transaction posted-1',
-      },
-    ]);
+    ).toEqual([{ type: 'delete', id: 2 }]);
   });
 
   it.each(bookedFlags)(
@@ -529,7 +524,7 @@ describe('planPlaidRemovals', () => {
     ]);
   });
 
-  it('deletes only the untouched pending rows in a mixed removal', () => {
+  it('deletes untouched posted and pending rows and skips a booked one', () => {
     expect(
       planPlaidRemovals(
         ['booked-1', 'posted-1', 'pending-1', 'missing'],
@@ -550,10 +545,7 @@ describe('planPlaidRemovals', () => {
         type: 'skip',
         message: 'Skipping removal of Plaid transaction booked-1',
       },
-      {
-        type: 'skip',
-        message: 'Skipping removal of Plaid transaction posted-1',
-      },
+      { type: 'delete', id: 2 },
       { type: 'delete', id: 3 },
     ]);
   });
@@ -577,20 +569,27 @@ describe('planPlaidRemovals', () => {
     expect(planPlaidRemovals(undefined, [row({ pending: true })])).toEqual([]);
   });
 
-  it('does not throw for a booked or non-pending removal', () => {
-    expect(() =>
+  it('deletes an untouched posted row and skips a booked one without throwing', () => {
+    expect(
       planPlaidRemovals(
         ['booked-1', 'posted-1'],
         [
           row({
+            id: 1,
             plaidTransactionId: 'booked-1',
             pending: true,
             matched: true,
           }),
-          row({ plaidTransactionId: 'posted-1', pending: false }),
+          row({ id: 2, plaidTransactionId: 'posted-1', pending: false }),
         ],
       ),
-    ).not.toThrow();
+    ).toEqual([
+      {
+        type: 'skip',
+        message: 'Skipping removal of Plaid transaction booked-1',
+      },
+      { type: 'delete', id: 2 },
+    ]);
   });
 });
 
