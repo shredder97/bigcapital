@@ -1,3 +1,4 @@
+import { BANK_RULE_ASSIGN_CATEGORY_LABELS } from '@/modules/BankRules/types';
 import { Transformer } from '../../Transformer/Transformer';
 
 export class UncategorizedTransactionTransformer extends Transformer {
@@ -137,9 +138,12 @@ export class UncategorizedTransactionTransformer extends Transformer {
 
   /**
    * Get the assigned formatted category.
+   * @param {object} transaction
    * @returns {string}
    */
-  public assignedCategoryFormatted() {
-    return this.context.i18n.t('banking.assigned_category.other_income');
+  public assignedCategoryFormatted(transaction) {
+    const category = transaction.recognizedTransaction?.assignedCategory;
+    const labelKey = BANK_RULE_ASSIGN_CATEGORY_LABELS[category];
+    return labelKey ? this.context.i18n.t(labelKey) : '';
   }
 }

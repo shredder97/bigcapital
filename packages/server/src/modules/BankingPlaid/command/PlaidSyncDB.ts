@@ -22,14 +22,24 @@ import { PlaidItem as PlaidItemModel } from '../models/PlaidItem';
 import { IAccountCreateDTO } from '@/interfaces/Account';
 import { IPlaidTransactionsSyncedEventPayload } from '../types/BankingPlaid.types';
 import { UncategorizedBankTransaction } from '../../BankingTransactions/models/UncategorizedBankTransaction';
-import { Inject, Injectable } from '@nestjs/common';
+import { Inject, Injectable, Logger } from '@nestjs/common';
 import { CreateUncategorizedTransactionService } from '@/modules/BankingCategorize/commands/CreateUncategorizedTransaction.service';
+import { CreateUncategorizedTransactionDTO } from '@/modules/BankingCategorize/types/BankingCategorize.types';
 import { TenantModelProxy } from '../../System/models/TenantBaseModel';
+import {
+  planPlaidRemovals,
+  planPlaidSync,
+  plaidSyncLookupIds,
+  PlaidSyncCommand,
+  PlaidSyncedRow,
+} from './PlaidTransactionSync';
 
 const CONCURRENCY_ASYNC = 10;
 
 @Injectable()
 export class PlaidSyncDb {
+  private readonly logger = new Logger(PlaidSyncDb.name);
+
   constructor(
     private readonly createAccountService: CreateAccountService,
     private readonly createUncategorizedTransaction: CreateUncategorizedTransactionService,
@@ -111,23 +121,18 @@ export class PlaidSyncDb {
       .findOne({ plaidAccountId })
       .throwIfNotFound();
 
-    // Transformes the Plaid transactions to cashflow create DTOs.
-    const transformTransaction = R.curry(transformPlaidTrxsToCashflowCreate)(
+    const incoming = plaidTranasctions.map((transaction) =>
+      transformPlaidTrxsToCashflowCreate(
+        cashflowAccount.id,
+        transaction as any,
+      ),
+    );
+    const existing = await this.loadSyncedRows(
+      plaidSyncLookupIds(incoming),
+      trx,
       cashflowAccount.id,
     );
-    const uncategorizedTransDTOs =
-      R.map(transformTransaction)(plaidTranasctions);
-
-    // Creating account transaction queue.
-    await bluebird.map(
-      uncategorizedTransDTOs,
-      (uncategoriedDTO) =>
-        this.createUncategorizedTransaction.create(
-          { ...uncategoriedDTO, batch },
-          trx,
-        ),
-      { concurrency: 1 },
-    );
+    await this.applyCommands(planPlaidSync(incoming, existing), batch, trx);
     // Triggers `onPlaidTransactionsSynced` event.
     await this.eventPublisher.emitAsync(events.plaid.onTransactionsSynced, {
       plaidAccountId,
@@ -169,22 +174,83 @@ export class PlaidSyncDb {
     plaidTransactionsIds: string[],
     trx?: Knex.Transaction,
   ) {
-    const uncategorizedTransactions =
-      await this.uncategorizedBankTransactionModel()
-        .query(trx)
-        .whereIn('plaidTransactionId', plaidTransactionsIds);
-    const uncategorizedTransactionsIds = uncategorizedTransactions.map(
-      (trans) => trans.id,
+    if (!plaidTransactionsIds?.length) {
+      return;
+    }
+    const existing = await this.loadSyncedRows(plaidTransactionsIds, trx);
+    await this.applyCommands(
+      planPlaidRemovals(plaidTransactionsIds, existing),
+      undefined,
+      trx,
     );
-    await bluebird.map(
-      uncategorizedTransactionsIds,
-      (uncategorizedTransactionId: number) =>
-        this.removePendingTransaction.removePendingTransaction(
-          uncategorizedTransactionId,
+  }
+
+  /**
+   * Loads uncategorized rows for the given Plaid ids. Account scope applies
+   * only when `accountId` is set; removals are matched by Plaid id alone.
+   */
+  private async loadSyncedRows(
+    plaidTransactionIds: string[],
+    trx?: Knex.Transaction,
+    accountId?: number,
+  ): Promise<PlaidSyncedRow[]> {
+    if (!plaidTransactionIds.length) {
+      return [];
+    }
+    const query = this.uncategorizedBankTransactionModel().query(trx);
+    if (accountId !== undefined) {
+      query.where('accountId', accountId);
+    }
+    const rows = await query
+      .whereIn('plaidTransactionId', plaidTransactionIds)
+      .withGraphFetched('matchedBankTransactions');
+
+    return rows.map((row) => {
+      const matched = (
+        row as UncategorizedBankTransaction & {
+          matchedBankTransactions?: unknown[];
+        }
+      ).matchedBankTransactions;
+      return {
+        id: row.id,
+        plaidTransactionId: row.plaidTransactionId,
+        pending: !!row.pending,
+        categorized: !!row.categorized,
+        categorizeRefId: row.categorizeRefId ?? null,
+        excludedAt: row.excludedAt ?? null,
+        matched: (matched?.length ?? 0) > 0,
+      };
+    });
+  }
+
+  /**
+   * Applies planner commands in order. `pending` is never part of a patch.
+   */
+  private async applyCommands(
+    commands: PlaidSyncCommand<CreateUncategorizedTransactionDTO>[],
+    batch: string | undefined,
+    trx?: Knex.Transaction,
+  ): Promise<void> {
+    for (const command of commands) {
+      if (command.type === 'skip') {
+        this.logger.warn(command.message);
+      } else if (command.type === 'patch') {
+        await this.uncategorizedBankTransactionModel()
+          .query(trx)
+          .findById(command.id)
+          .patch(command.values);
+      } else if (command.type === 'delete') {
+        await this.removePendingTransaction.removePendingTransaction(
+          command.id,
           trx,
-        ),
-      { concurrency: CONCURRENCY_ASYNC },
-    );
+        );
+      } else {
+        await this.createUncategorizedTransaction.create(
+          { ...command.transaction, batch },
+          trx,
+        );
+      }
+    }
   }
 
   /**

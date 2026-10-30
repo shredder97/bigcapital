@@ -59,7 +59,9 @@ export class CreateUncategorizedTransactionService {
             createUncategorizedTransactionDTO,
           )
         ) {
-          uncategorizedTransaction = await this.uncategorizedBankTransaction()
+          // Already synced. Skip the created event, which increments
+          // `accounts.uncategorized_transactions`.
+          return this.uncategorizedBankTransaction()
             .query(trx)
             .findOne({
               plaidTransactionId:
@@ -67,9 +69,8 @@ export class CreateUncategorizedTransactionService {
               accountId: createUncategorizedTransactionDTO.accountId,
             })
             .throwIfNotFound();
-        } else {
-          throw error;
         }
+        throw error;
       }
 
       await this.eventPublisher.emitAsync(

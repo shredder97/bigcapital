@@ -60,6 +60,19 @@ export enum BankRuleAssignCategory {
   OwnerDrawings = 'OwnerDrawings',
 }
 
+export const BANK_RULE_ASSIGN_CATEGORY_LABELS: Record<
+  BankRuleAssignCategory,
+  string
+> = {
+  [BankRuleAssignCategory.InterestIncome]:
+    'banking.assigned_category.interest_income',
+  [BankRuleAssignCategory.OtherIncome]:
+    'banking.assigned_category.other_income',
+  [BankRuleAssignCategory.Deposit]: 'banking.assigned_category.deposit',
+  [BankRuleAssignCategory.Expense]: 'transaction_type.expense',
+  [BankRuleAssignCategory.OwnerDrawings]: 'transaction_type.owner_drawing',
+};
+
 export type BankRuleComparator =
   | 'contains'
   | 'equals'
