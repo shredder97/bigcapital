@@ -1,7 +1,19 @@
-import { Module } from '@nestjs/common';
+import { ExecutionContext, Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { ThrottlerModule } from '@nestjs/throttler';
+import { THROTTLER_LIMIT } from '@nestjs/throttler/dist/throttler.constants';
 import { ThrottlerStorageRedisService } from '@nest-lab/throttler-storage-redis';
+
+// Public entry does not re-export THROTTLER_LIMIT. @Throttle({ auth }) writes this key.
+const AUTH_THROTTLE_LIMIT_KEY = `${THROTTLER_LIMIT}auth`;
+
+/** Skip the auth throttler unless the handler or controller opted in. */
+export function skipUnlessAuthThrottled(context: ExecutionContext): boolean {
+  return (
+    !Reflect.hasMetadata(AUTH_THROTTLE_LIMIT_KEY, context.getHandler()) &&
+    !Reflect.hasMetadata(AUTH_THROTTLE_LIMIT_KEY, context.getClass())
+  );
+}
 
 @Module({
   imports: [
@@ -26,6 +38,7 @@ import { ThrottlerStorageRedisService } from '@nest-lab/throttler-storage-redis'
                 name: 'auth',
                 ttl: 60000,
                 limit: 1000000, // Effectively disable throttling in tests
+                skipIf: skipUnlessAuthThrottled,
               },
             ],
             // No storage specified = uses in-memory storage
@@ -53,6 +66,8 @@ import { ThrottlerStorageRedisService } from '@nest-lab/throttler-storage-redis'
               name: 'auth',
               ttl: authTtl,
               limit: authLimit,
+              // Only routes that opt in with @Throttle({ auth: ... }) are auth-throttled.
+              skipIf: skipUnlessAuthThrottled,
             },
           ],
           storage: new ThrottlerStorageRedisService({

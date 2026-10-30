@@ -16,7 +16,6 @@ import {
   HttpCode,
   Param,
 } from '@nestjs/common';
-import { Throttle } from '@nestjs/throttler';
 import { BuildOrganizationService } from './commands/BuildOrganization.service';
 import {
   BuildOrganizationDto,
@@ -82,7 +81,6 @@ export class OrganizationController {
   }
 
   @Get('build/:buildJobId')
-  @Throttle({ default: { limit: 300, ttl: 60000 } }) // 300 req/min
   @ApiParam({
     name: 'buildJobId',
     required: true,
