@@ -270,8 +270,7 @@ export const AccountsData = [
     slug: 'drawings',
     account_type: 'equity',
     code: '30004',
-    description:
-      'Goods purchased with the intention of selling these to customers',
+    description: 'Amounts the owners withdraw from the business.',
     active: 1,
     index: 1,
     predefined: 1,
