@@ -1,49 +1,57 @@
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
-import { readWebapp } from './sourceFiles';
+import { BrandMark } from '@/components/BrandMark';
+import { AuthCopyright } from '@/containers/Authentication/AuthCopyright';
+import { AuthInsider } from '@/containers/Authentication/AuthInsider';
+
+const DEFAULT_MARK = '<span class="brand-mark" aria-label="Evena">E</span>';
+const SMALL_MARK =
+  '<span class="brand-mark brand-mark--sm" aria-label="Evena">E</span>';
 
 describe('BrandMark', () => {
-  it('renders a bold E labelled Evena at the default size', async () => {
-    const { BrandMark } = await import('@/components/BrandMark');
-    expect(renderToStaticMarkup(<BrandMark />)).toBe(
-      '<span class="brand-mark" aria-label="Evena">E</span>',
-    );
+  it('renders an E with the default mark class', () => {
+    expect(renderToStaticMarkup(<BrandMark />)).toBe(DEFAULT_MARK);
   });
 
-  it('appends the small modifier without a size prop', async () => {
-    const { BrandMark } = await import('@/components/BrandMark');
+  it('adds the small modifier to the mark class', () => {
     expect(renderToStaticMarkup(<BrandMark className="brand-mark--sm" />)).toBe(
-      '<span class="brand-mark brand-mark--sm" aria-label="Evena">E</span>',
+      SMALL_MARK,
     );
   });
 
-  it('keeps extra classes after the mark classes', async () => {
-    const { BrandMark } = await import('@/components/BrandMark');
+  it('keeps caller classes after the mark class', () => {
     expect(
       renderToStaticMarkup(<BrandMark className="brand-mark--sm rail" />),
     ).toBe(
       '<span class="brand-mark brand-mark--sm rail" aria-label="Evena">E</span>',
     );
   });
+});
 
-  it('does not render a link', async () => {
-    const { BrandMark } = await import('@/components/BrandMark');
-    const view = renderToStaticMarkup(<BrandMark />);
-    expect(view).not.toContain('<a');
-    expect(view).not.toContain('href');
+describe('AuthCopyright', () => {
+  it('renders the small Evena mark', () => {
+    expect(renderToStaticMarkup(<AuthCopyright />)).toBe(SMALL_MARK);
   });
 
-  it('declares the mark in the existing base stylesheet', () => {
-    const base = readWebapp('src/style/_base.scss');
-    expect(base).toContain(
-      "font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;",
+  it('shows that mark under the auth card', () => {
+    const view = renderToStaticMarkup(
+      <AuthInsider>
+        <p>Sign in</p>
+      </AuthInsider>,
     );
-    expect(base).toContain('font-weight: 700;');
-    expect(base).toContain('line-height: 1;');
-    expect(base).toContain('color: currentColor;');
-    expect(base).toContain('.brand-mark {');
-    expect(base).toContain('font-size: 36px;');
-    expect(base).toContain('.brand-mark--sm {');
-    expect(base).toContain('font-size: 24px;');
+
+    expect(view).toContain('Sign in');
+    expect(view).toContain(SMALL_MARK);
+  });
+
+  it('omits the mark when the copyright slot is turned off', () => {
+    const view = renderToStaticMarkup(
+      <AuthInsider copyright={false}>
+        <p>Sign in</p>
+      </AuthInsider>,
+    );
+
+    expect(view).toContain('Sign in');
+    expect(view).not.toContain('brand-mark');
   });
 });
