@@ -190,9 +190,9 @@ export const AccountsData = [
   {
     name: 'Owner A Drawings',
     slug: 'owner-drawings',
-    account_type: 'other-current-liability',
+    account_type: 'equity',
     parent_account_id: null,
-    code: '20002',
+    code: '30005',
     description: 'Withdrawals by the owners.',
     active: 1,
     index: 1,
@@ -200,7 +200,7 @@ export const AccountsData = [
   },
   {
     name: 'Loan',
-    slug: 'owner-drawings',
+    slug: 'loan',
     account_type: 'other-current-liability',
     code: '20003',
     description: 'Money that has been borrowed from a creditor.',
@@ -269,9 +269,8 @@ export const AccountsData = [
     name: `Drawings`,
     slug: 'drawings',
     account_type: 'equity',
-    code: '30003',
-    description:
-      'Goods purchased with the intention of selling these to customers',
+    code: '30004',
+    description: 'Amounts the owners withdraw from the business.',
     active: 1,
     index: 1,
     predefined: 1,
