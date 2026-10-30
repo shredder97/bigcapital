@@ -137,17 +137,19 @@
     "eslint-config-react-app": "^7.0.1",
     "eslint-plugin-import": "^2.29.1",
     "prettier": "^3.3.3",
-    "vite": "^5.1.6"
+    "vite": "^5.1.6",
+    "vitest": "^2.1.3"
   },
   "scripts": {
     "dev": "cross-env PORT=4000 vite",
     "build": "vite build",
     "start": "cross-env PORT=4173 vite preview",
     "typecheck": "tsc --noEmit",
-    "format": "prettier --write \"src/**/*.{ts,tsx,js,jsx,json,md}\"",
-    "format:check": "prettier --check \"src/**/*.{ts,tsx,js,jsx,json,md}\"",
-    "lint": "eslint \"src/**/*.{ts,tsx,js,jsx}\" --fix",
-    "lint:check": "eslint \"src/**/*.{ts,tsx,js,jsx}\"",
+    "format": "prettier --write \"src/**/*.{ts,tsx,js,jsx,json,md}\" \"test/**/*.{ts,tsx}\"",
+    "format:check": "prettier --check \"src/**/*.{ts,tsx,js,jsx,json,md}\" \"test/**/*.{ts,tsx}\"",
+    "lint": "eslint \"src/**/*.{ts,tsx,js,jsx}\" \"test/**/*.{ts,tsx}\" --fix",
+    "lint:check": "eslint \"src/**/*.{ts,tsx,js,jsx}\" \"test/**/*.{ts,tsx}\"",
+    "test": "vitest run",
     "test:e2e": "playwright test --config ../../playwright.config.ts"
   },
   "eslintConfig": {
