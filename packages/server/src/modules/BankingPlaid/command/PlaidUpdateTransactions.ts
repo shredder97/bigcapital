@@ -141,27 +141,22 @@ export class PlaidUpdateTransactions {
     let hasMore = true;
 
     const batchSize = 100;
-    try {
-      // Iterate through each page of new transaction updates for item
-      while (hasMore) {
-        const request = {
-          access_token: plaidAccessToken,
-          cursor: cursor,
-          count: batchSize,
-        };
-        const response = await this.plaidClient.transactionsSync(request);
-        const data = response.data;
-        // Add this page of results
-        added = added.concat(data.added);
-        modified = modified.concat(data.modified);
-        removed = removed.concat(data.removed);
-        hasMore = data.has_more;
-        // Update cursor to the next cursor
-        cursor = data.next_cursor;
-      }
-    } catch (err) {
-      console.error(`Error fetching transactions: ${err.message}`);
-      cursor = lastCursor;
+    // A page failure must abort the surrounding transaction. Swallowing it
+    // would apply a partial page and leave the cursor unchanged, so the
+    // dropped page would never be retried.
+    while (hasMore) {
+      const request = {
+        access_token: plaidAccessToken,
+        cursor: cursor,
+        count: batchSize,
+      };
+      const response = await this.plaidClient.transactionsSync(request);
+      const data = response.data;
+      added = added.concat(data.added);
+      modified = modified.concat(data.modified);
+      removed = removed.concat(data.removed);
+      hasMore = data.has_more;
+      cursor = data.next_cursor;
     }
     return { added, modified, removed, cursor, accessToken: plaidAccessToken };
   }

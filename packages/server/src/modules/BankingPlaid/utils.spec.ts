@@ -67,6 +67,33 @@ describe('transformPlaidTrxsToCashflowCreate', () => {
     expect(transaction.referenceNo).toBe('REF-001');
   });
 
+  it('stores a positive Plaid amount as a negative value', () => {
+    const transaction = transformPlaidTrxsToCashflowCreate(
+      1,
+      buildPlaidTransaction({ amount: 12.34 }),
+    );
+
+    expect(transaction.amount).toBe(-12.34);
+  });
+
+  it('stores a negative Plaid amount as a positive value', () => {
+    const transaction = transformPlaidTrxsToCashflowCreate(
+      1,
+      buildPlaidTransaction({ amount: -40 }),
+    );
+
+    expect(transaction.amount).toBe(40);
+  });
+
+  it('stores a zero Plaid amount as zero', () => {
+    const transaction = transformPlaidTrxsToCashflowCreate(
+      1,
+      buildPlaidTransaction({ amount: 0 }),
+    );
+
+    expect(transaction.amount).toBe(-0);
+  });
+
   it('handles missing payment metadata', () => {
     const transaction = transformPlaidTrxsToCashflowCreate(
       1,
