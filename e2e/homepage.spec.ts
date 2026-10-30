@@ -145,8 +145,18 @@ async function inviteToken(email: string): Promise<string> {
     database: process.env.SYSTEM_DB_NAME || 'bigcapital_system',
   });
   try {
+    const [tables] = await connection.query(
+      `SELECT table_name AS tableName
+       FROM information_schema.tables
+       WHERE table_schema = DATABASE() AND LOWER(table_name) = 'user_invites'`,
+      [],
+    );
+    const tableName = tables[0]?.tableName;
+    if (!tableName) {
+      throw new Error('user_invites table was not found in the system database');
+    }
     const [rows] = await connection.query(
-      'SELECT token FROM user_invites WHERE email = ? ORDER BY id DESC LIMIT 1',
+      `SELECT token FROM \`${tableName.replace(/`/g, '')}\` WHERE email = ? ORDER BY id DESC LIMIT 1`,
       [email],
     );
     const token = (rows as Array<{ token: string }>)[0]?.token;

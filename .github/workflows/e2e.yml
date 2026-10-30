@@ -134,6 +134,11 @@ jobs:
       - name: Run database migrations
         run: pnpm system:migrate:latest
 
+      - name: Start SMTP sink
+        run: |
+          node e2e/smtp-sink.js &
+          sleep 1
+
       - name: Start server in background
         run: |
           cd packages/server && pnpm start &
