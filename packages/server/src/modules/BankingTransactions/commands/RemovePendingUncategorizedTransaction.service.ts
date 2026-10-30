@@ -9,6 +9,7 @@ import { EventEmitter2 } from '@nestjs/event-emitter';
 import { UncategorizedBankTransaction } from '../models/UncategorizedBankTransaction';
 import { ServiceError } from '@/modules/Items/ServiceError';
 import { Account } from '@/modules/Accounts/models/Account.model';
+import { isBooked } from '@/modules/BankingPlaid/command/PlaidTransactionSync';
 import { UnitOfWork } from '@/modules/Tenancy/TenancyDB/UnitOfWork.service';
 import { events } from '@/common/events/events';
 import { TenantModelProxy } from '@/modules/System/models/TenantBaseModel';
@@ -57,10 +58,30 @@ export class RemovePendingUncategorizedTransaction {
     uncategorizedTransactionId: number,
     trx?: Knex.Transaction,
   ): Promise<void> {
-    const transaction = await this.findTransaction(
-      uncategorizedTransactionId,
-      trx,
-    );
+    const transaction = await this.uncategorizedBankTransaction()
+      .query(trx)
+      .findById(uncategorizedTransactionId)
+      .withGraphFetched('matchedBankTransactions')
+      .throwIfNotFound();
+    const matched = (
+      transaction as UncategorizedBankTransaction & {
+        matchedBankTransactions?: unknown[];
+      }
+    ).matchedBankTransactions;
+
+    if (
+      isBooked({
+        id: transaction.id,
+        plaidTransactionId: transaction.plaidTransactionId,
+        pending: !!transaction.pending,
+        categorized: !!transaction.categorized,
+        categorizeRefId: transaction.categorizeRefId ?? null,
+        excludedAt: transaction.excludedAt ?? null,
+        matched: (matched?.length ?? 0) > 0,
+      })
+    ) {
+      throw new ServiceError(ERRORS.TRANSACTION_BOOKED);
+    }
     return this.deleteUncategorizedTransaction(transaction, trx);
   }
 

@@ -177,7 +177,7 @@ function patchValues(transaction: PlaidSyncTransaction): PlaidSyncPatch {
   };
 }
 
-function isBooked(row: PlaidSyncedRow): boolean {
+export function isBooked(row: PlaidSyncedRow): boolean {
   return (
     !!row.categorized ||
     row.categorizeRefId != null ||
