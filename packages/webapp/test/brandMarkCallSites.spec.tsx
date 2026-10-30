@@ -32,7 +32,7 @@ vi.mock('@/components', async () => {
         }
       });
 
-      return (when || otherwise) as ReactElement;
+      return (when || otherwise) as unknown as ReactElement;
     },
     { When, Otherwise },
   );
@@ -156,7 +156,7 @@ vi.mock('@/containers/Drawer/withDrawerActions', () => ({
         ...props,
         openDrawer: () => undefined,
         closeDrawer: () => undefined,
-      });
+      } as React.Attributes);
     },
 }));
 
