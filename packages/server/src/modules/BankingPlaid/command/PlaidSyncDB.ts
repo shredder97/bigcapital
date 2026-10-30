@@ -122,10 +122,7 @@ export class PlaidSyncDb {
       .throwIfNotFound();
 
     const incoming = plaidTranasctions.map((transaction) =>
-      transformPlaidTrxsToCashflowCreate(
-        cashflowAccount.id,
-        transaction as any,
-      ),
+      transformPlaidTrxsToCashflowCreate(cashflowAccount.id, transaction),
     );
     const existing = await this.loadSyncedRows(
       plaidSyncLookupIds(incoming),
@@ -227,7 +224,9 @@ export class PlaidSyncDb {
    * Applies planner commands in order. `pending` is never part of a patch.
    */
   private async applyCommands(
-    commands: PlaidSyncCommand<CreateUncategorizedTransactionDTO>[],
+    commands: ReadonlyArray<
+      PlaidSyncCommand<CreateUncategorizedTransactionDTO>
+    >,
     batch: string | undefined,
     trx?: Knex.Transaction,
   ): Promise<void> {
@@ -240,7 +239,7 @@ export class PlaidSyncDb {
           .findById(command.id)
           .patch(command.values);
       } else if (command.type === 'delete') {
-        await this.removePendingTransaction.removePendingTransaction(
+        await this.removePendingTransaction.removeUncategorizedTransaction(
           command.id,
           trx,
         );

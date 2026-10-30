@@ -23,13 +23,10 @@ export interface PlaidSyncedRow {
   matched: boolean;
 }
 
-export interface PlaidSyncPatch {
-  date: Date | string;
-  amount: number;
-  description?: string;
-  payee?: string;
-  referenceNo?: string | null;
-}
+type PlaidSyncPatch = Pick<
+  PlaidSyncTransaction,
+  'date' | 'amount' | 'description' | 'payee' | 'referenceNo'
+>;
 
 export type PlaidSyncCommand<T> =
   | { type: 'insert'; transaction: T }
@@ -89,26 +86,26 @@ export function planPlaidSync<T extends PlaidSyncTransaction>(
 }
 
 /**
- * Plans deletions for removed Plaid ids. A booked or non-pending row is
- * skipped so the caller can finish the sync and save the cursor.
+ * Plans deletions for removed Plaid ids. A booked row is skipped. An
+ * untouched posted row is deleted so the caller can decrement the counter.
  */
 export function planPlaidRemovals(
   removedIds: string[] | undefined,
   existing: PlaidSyncedRow[],
-): Array<{ type: 'delete'; id: number } | { type: 'skip'; message: string }> {
+): Array<Extract<PlaidSyncCommand<never>, { type: 'delete' | 'skip' }>> {
   if (!removedIds?.length) {
     return [];
   }
   const removed = new Set(removedIds);
   const commands: Array<
-    { type: 'delete'; id: number } | { type: 'skip'; message: string }
+    Extract<PlaidSyncCommand<never>, { type: 'delete' | 'skip' }>
   > = [];
 
   for (const row of existing) {
     if (!removed.has(row.plaidTransactionId)) {
       continue;
     }
-    if (isBooked(row) || !row.pending) {
+    if (isBooked(row)) {
       commands.push({
         type: 'skip',
         message: `Skipping removal of Plaid transaction ${row.plaidTransactionId}`,

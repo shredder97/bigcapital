@@ -2,7 +2,6 @@ import {
   Item as PlaidItem,
   Institution as PlaidInstitution,
   AccountBase as PlaidAccount,
-  TransactionBase as PlaidTransactionBase,
   AccountType as PlaidAccountType,
 } from 'plaid';
 import { ACCOUNT_TYPE } from '@/constants/accounts';
@@ -83,7 +82,19 @@ const truncateTransactionString = (
  */
 export const transformPlaidTrxsToCashflowCreate = (
   cashflowAccountId: number,
-  plaidTranasction: PlaidTransactionBase,
+  plaidTranasction: {
+    date: string;
+    amount: number;
+    name?: string | null;
+    iso_currency_code?: string | null;
+    transaction_id: string;
+    pending?: boolean | null;
+    pending_transaction_id?: string | null;
+    payment_meta?: {
+      payee?: string | null;
+      reference_number?: string | null;
+    } | null;
+  },
 ): CreateUncategorizedTransactionDTO => {
   return {
     date: plaidTranasction.date,

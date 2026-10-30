@@ -44,6 +44,7 @@ const buildService = (
     eventPublisher as any,
     uow as any,
     uncategorizedBankTransaction as any,
+    (() => ({})) as any,
   );
 
   return {
