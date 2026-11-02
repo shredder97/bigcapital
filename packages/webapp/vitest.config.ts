@@ -10,6 +10,7 @@ export default defineConfig({
   test: {
     environment: 'node',
     globals: true,
+    css: true,
     include: [
       'src/**/*.spec.ts',
       'src/**/*.spec.tsx',
