@@ -1,0 +1,21 @@
+[
+  { "input": "  Home Depot  ", "expected": "Home Depot" },
+  { "input": "Home    Depot", "expected": "Home Depot" },
+  { "input": "HOME DEPOT #4521", "expected": "HOME DEPOT" },
+  { "input": "Starbucks Store 1234", "expected": "Starbucks" },
+  { "input": "Walmart 8891", "expected": "Walmart" },
+  { "input": "COSTCO WHOLESALE # 109", "expected": "COSTCO WHOLESALE" },
+  { "input": "Target Store #88", "expected": "Target" },
+  { "input": "SQ *BLUE BOTTLE", "expected": "SQ *BLUE BOTTLE" },
+  { "input": "pay", "expected": null },
+  { "input": "  payment  ", "expected": null },
+  { "input": "ACH", "expected": null },
+  { "input": "Online", "expected": null },
+  { "input": "Transfer", "expected": null },
+  { "input": "Deposit", "expected": null },
+  { "input": "POS", "expected": null },
+  { "input": "Debit", "expected": null },
+  { "input": "", "expected": null },
+  { "input": "   ", "expected": null },
+  { "input": null, "expected": null }
+]
