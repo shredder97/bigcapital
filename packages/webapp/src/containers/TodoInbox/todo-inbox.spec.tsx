@@ -367,6 +367,36 @@ describe('to-do inbox', () => {
     ).toHaveLength(2);
   });
 
+  it('ignores a second tap while a save is in flight', async () => {
+    let release: () => void = () => undefined;
+    const gate = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+    const categorize = vi.fn(() => gate);
+    const createRule = vi.fn(async () => undefined);
+    render(
+      <TodoInboxView
+        rows={[withdrawal]}
+        pills={[pill]}
+        onCategorize={categorize}
+        onCreateRule={createRule}
+        onSomethingElse={() => undefined}
+        onEditRule={() => undefined}
+      />,
+    );
+    fireEvent.click(screen.getByRole('checkbox'));
+    const farm = screen.getByRole('button', { name: 'Farm' });
+    fireEvent.click(farm);
+    fireEvent.click(farm);
+    expect(categorize).toHaveBeenCalledTimes(1);
+    expect((farm as HTMLButtonElement).disabled).toBe(true);
+    await act(async () => {
+      release();
+      await gate;
+    });
+    expect(createRule).toHaveBeenCalledTimes(1);
+  });
+
   it('categorizes before creating a rule, and skips the rule when categorize fails', async () => {
     const order: string[] = [];
     const categorize = vi.fn(async () => {
