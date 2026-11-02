@@ -397,6 +397,30 @@ describe('to-do inbox', () => {
     expect(createRule).toHaveBeenCalledTimes(1);
   });
 
+  it('retries only the rule after categorize has already worked', async () => {
+    const categorize = vi.fn(async () => undefined);
+    const createRule = vi
+      .fn()
+      .mockRejectedValueOnce(new Error('rule'))
+      .mockResolvedValueOnce(undefined);
+    render(
+      <TodoInboxView
+        rows={[withdrawal]}
+        pills={[pill]}
+        onCategorize={categorize}
+        onCreateRule={createRule}
+        onSomethingElse={() => undefined}
+        onEditRule={() => undefined}
+      />,
+    );
+    await click(screen.getByRole('checkbox'));
+    await click(screen.getByRole('button', { name: 'Farm' }));
+    expect(screen.queryByText('Was this $42 at Home Depot for…?')).toBeNull();
+    await click(screen.getByRole('button', { name: /save rule/i }));
+    expect(categorize).toHaveBeenCalledTimes(1);
+    expect(createRule).toHaveBeenCalledTimes(2);
+  });
+
   it('categorizes before creating a rule, and skips the rule when categorize fails', async () => {
     const order: string[] = [];
     const categorize = vi.fn(async () => {
