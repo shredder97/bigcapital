@@ -36,6 +36,9 @@ export function formatTodoAmount(amount: number | null | undefined): string {
   return `$${formatted}`;
 }
 
+const MONEY_IN = new Set(['Deposit', 'OtherIncome', 'InterestIncome']);
+const MONEY_OUT = new Set(['Expense', 'OwnerDrawings']);
+
 function moneyIn(tx: QuestionTransaction): boolean {
   if (tx.isDepositTransaction) {
     return true;
@@ -101,6 +104,14 @@ export function parseAnswerChoices(
     pills.push({ label, accountId, assignCategory });
   });
   return pills;
+}
+
+export function pillsForDirection<T extends { assignCategory: string }>(
+  tx: QuestionTransaction,
+  pills: T[] | null | undefined,
+): T[] {
+  const allowed = moneyIn(tx) ? MONEY_IN : MONEY_OUT;
+  return (pills ?? []).filter((pill) => allowed.has(pill.assignCategory));
 }
 
 export function buildQuestion(

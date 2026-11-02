@@ -2,7 +2,7 @@ import { useRef, useState } from 'react';
 import { answerTodo } from './answer';
 import { categoryTip, categoryToTransactionType, toTodoKind } from './kind';
 import { matchSource, planRule } from './planRule';
-import { buildQuestion } from './question';
+import { buildQuestion, pillsForDirection } from './question';
 import type { ExistingRule, RuleDto } from './planRule';
 import type { AnswerPill } from './question';
 import type { ReactNode } from 'react';
@@ -239,6 +239,7 @@ export function TodoInboxView({
       {visible.map((row) => {
         const kind = toTodoKind(row);
         const source = matchSource(row);
+        const rowPills = pillsForDirection(row, pills);
         const question =
           kind === 'check'
             ? `We put this in ${row.assignedAccountName || 'that account'}. OK?`
@@ -263,7 +264,7 @@ export function TodoInboxView({
                 </button>
               ) : null}
               {kind === 'unsure'
-                ? pills.map((pill) => {
+                ? rowPills.map((pill) => {
                     const tip = `Puts it in: ${pill.accountName || 'that account'} (${categoryTip(pill.assignCategory)})`;
                     return (
                       <span className="todo-pill-pair" key={pill.label}>
