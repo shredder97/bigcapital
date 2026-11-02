@@ -108,6 +108,7 @@ import { EEModule } from '../EE/EE.module';
 import { AnalyticsModule } from '../Analytics/Analytics.module';
 import { ThrottlerGuard } from '@nestjs/throttler';
 import { AppThrottleModule } from './AppThrottle.module';
+import { AiAskModule } from '../AiAsk/AiAsk.module';
 
 @Module({
   imports: [
@@ -194,6 +195,7 @@ import { AppThrottleModule } from './AppThrottle.module';
     TenancyModelsModule,
     TenantModelsInitializeModule,
     AuthModule,
+    AiAskModule,
     TenancyModule,
     ChromiumlyTenancyModule,
     TransformerModule,

@@ -1,5 +1,9 @@
 // @vitest-environment jsdom
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+
+(
+  globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }
+).IS_REACT_ACT_ENVIRONMENT = true;
 import { act } from 'react';
 import { createRoot, Root } from 'react-dom/client';
 import { MemoryRouter, Route, Switch } from 'react-router-dom';
@@ -77,6 +81,12 @@ describe('AskBox', () => {
     vi.unstubAllGlobals();
   });
 
+  async function settle() {
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    });
+  }
+
   function renderAt(path: string) {
     const client = new QueryClient({
       defaultOptions: { queries: { retry: false } },
@@ -118,6 +128,8 @@ describe('AskBox', () => {
         .querySelector('[data-testId="ask-ai-open"]')
         ?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
     });
+    await settle();
+    await settle();
 
     expect(container.textContent).toContain('Past fuel question');
     expect(
@@ -185,6 +197,8 @@ describe('AskBox', () => {
         new Event('submit', { bubbles: true, cancelable: true }),
       );
     });
+    await settle();
+    await settle();
 
     expect(container.textContent).toContain(
       "AI helper isn't set up on this server.",

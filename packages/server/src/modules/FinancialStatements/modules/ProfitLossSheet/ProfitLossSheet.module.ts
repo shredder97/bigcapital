@@ -14,6 +14,7 @@ import { ProfitLossSheetApplication } from './ProfitLossSheetApplication';
 @Module({
   imports: [TenancyModule, FinancialSheetCommonModule, AccountsModule],
   controllers: [ProfitLossSheetController],
+  exports: [ProfitLossSheetApplication],
   providers: [
     ProfitLossSheetApplication,
     ProfitLossSheetService,

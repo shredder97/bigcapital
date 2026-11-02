@@ -11,6 +11,7 @@ import DialogsContainer from '@/components/DialogsContainer';
 import DrawersContainer from '@/components/DrawersContainer';
 import PreferencesPage from '@/components/Preferences/PreferencesPage';
 import { AlertsContainer } from '@/containers/AlertsContainer';
+import { AskBox } from '@/containers/Dashboard/AskBox';
 import { Sidebar } from '@/containers/Dashboard/Sidebar/Sidebar';
 import { DashboardUniversalSearch } from '@/containers/UniversalSearch/DashboardUniversalSearch';
 
@@ -65,6 +66,7 @@ export default function Dashboard() {
       <DialogsContainer />
       <DrawersContainer />
       <AlertsContainer />
+      <AskBox />
     </DashboardProvider>
   );
 }

@@ -35,6 +35,7 @@ import { RefundCreditNote } from '@/modules/CreditNoteRefunds/models/RefundCredi
 import { VendorCredit } from '@/modules/VendorCredit/models/VendorCredit';
 import { RefundVendorCredit } from '@/modules/VendorCreditsRefund/models/RefundVendorCredit';
 import { PaymentReceived } from '@/modules/PaymentReceived/models/PaymentReceived';
+import { AiQuestion } from '@/modules/AiAsk/AiQuestion.model';
 import { Model } from 'objection';
 import { ClsModule } from 'nestjs-cls';
 import { TenantUser } from './models/TenantUser.model';
@@ -76,6 +77,7 @@ const models = [
   PaymentReceived,
   PaymentReceivedEntry,
   TenantUser,
+  AiQuestion,
 ];
 
 /**

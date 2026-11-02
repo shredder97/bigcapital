@@ -493,7 +493,7 @@ describe('AiAskService', () => {
     );
     const inserted: unknown[] = [];
     const service = new AiAskService(
-      llm,
+      llm as LlmClient,
       tools,
       { get: () => 42 } as unknown as ClsService,
       (() => ({
@@ -564,9 +564,16 @@ describe('AiAskService', () => {
 
     await service.ask(QUESTION, allowAll);
 
-    expect(JSON.stringify(llm.complete.mock.calls[1][0].messages)).toContain(
-      '"accounts":[]',
-    );
+    const messages = llm.complete.mock.calls[1][0].messages as Array<{
+      content: string | Array<{ type: string; content?: string }>;
+    }>;
+    const result = messages
+      .flatMap((message) =>
+        Array.isArray(message.content) ? message.content : [],
+      )
+      .find((block) => block.type === 'tool_result');
+
+    expect(JSON.parse(result?.content ?? '{}')).toEqual({ accounts: [] });
   });
 
   it('lets a prompt-injection memo produce only a read or an answer', async () => {
@@ -639,15 +646,25 @@ describe('AiAskService', () => {
   it('does not cache an answer or a tool result across questions', async () => {
     const llm = {
       complete: jest.fn(async (req: LlmCompletionRequest) => {
-        const text = JSON.stringify(req.messages);
-        if (!text.includes('tool_result')) {
+        const messages = req.messages as Array<{
+          content: string | Array<{ type: string; content?: string }>;
+        }>;
+        const result = messages
+          .flatMap((message) =>
+            Array.isArray(message.content) ? message.content : [],
+          )
+          .find((block) => block.type === 'tool_result');
+        if (!result) {
           return toolUse('profit_loss', {
             fromDate: '2026-01-01',
             toDate: '2026-02-01',
           });
         }
-        const amount = text.includes('"amount":1') ? 'one' : 'two';
-        return toolUse('answer', { answer: amount, chart: null });
+        const amount = JSON.parse(result.content ?? '{}').netIncome;
+        return toolUse('answer', {
+          answer: amount === 1 ? 'one' : 'two',
+          chart: null,
+        });
       }),
     };
     const { service, profitLoss } = build({ llm });

@@ -7,7 +7,6 @@ import { AppModule } from '../src/modules/App/App.module';
 import { LLM_CLIENT } from '../src/modules/AiAsk/AnthropicLlmClient';
 import { AiQuestion } from '../src/modules/AiAsk/AiQuestion.model';
 import { ProfitLossSheetApplication } from '../src/modules/FinancialStatements/modules/ProfitLossSheet/ProfitLossSheetApplication';
-import { TENANCY_DB_CONNECTION } from '../src/modules/Tenancy/TenancyDB/TenancyDB.constants';
 import { ThrottlerStorage } from '@nestjs/throttler';
 
 jest.setTimeout(180000);
@@ -43,6 +42,19 @@ function answer(text: string, chart: unknown = null) {
       },
     ],
   };
+}
+
+function toolResult(messages: unknown): string | undefined {
+  const list = Array.isArray(messages) ? messages : [];
+  for (const message of list) {
+    const content = (message as { content?: unknown }).content;
+    if (!Array.isArray(content)) continue;
+    const block = content.find(
+      (item) => (item as { type?: string }).type === 'tool_result',
+    ) as { content?: string } | undefined;
+    if (block?.content) return block.content;
+  }
+  return undefined;
 }
 
 function tool(name: string, input: Record<string, unknown>) {
@@ -98,7 +110,18 @@ describe('Ask AI (e2e)', () => {
       organizationId: signin.body.organization_id || signin.body.organizationId,
       userId: Number(signin.body.user_id ?? signin.body.userId),
     };
-    await migrate(owner.organizationId, owner.userId);
+    const cls = app.get(ClsService);
+    await cls.run(async () => {
+      cls.set('organizationId', owner.organizationId);
+      cls.set('userId', owner.userId);
+      await cls.resolveProxyProviders();
+      await app
+        .get<
+          () => { query: () => { delete: () => Promise<unknown> } }
+        >(AiQuestion.name)()
+        .query()
+        .delete();
+    });
   });
 
   beforeEach(async () => {
@@ -125,23 +148,7 @@ describe('Ask AI (e2e)', () => {
     };
   }
 
-  async function migrate(organizationId: string, userId: number) {
-    const cls = app.get(ClsService);
-    await cls.run(async () => {
-      cls.set('organizationId', organizationId);
-      cls.set('userId', userId);
-      const knex = app.get<
-        () => { migrate: { latest: () => Promise<unknown> } }
-      >(TENANCY_DB_CONNECTION);
-      await knex().migrate.latest();
-    });
-  }
-
-  async function ask(
-    question: string,
-    headers = authed(),
-    ip = '203.0.113.10',
-  ) {
+  function ask(question: string, headers = authed(), ip = '203.0.113.10') {
     return request(app.getHttpServer())
       .post('/ai/ask')
       .set(headers)
@@ -233,7 +240,6 @@ describe('Ask AI (e2e)', () => {
 
   it('keeps each tenant on its own profit and loss totals', async () => {
     const other = await signupOrganization('Tenant B Books');
-    await migrate(other.organizationId, other.userId);
     await request(app.getHttpServer())
       .post('/expenses')
       .set(authed())
@@ -257,15 +263,14 @@ describe('Ask AI (e2e)', () => {
       .expect(201);
 
     handler = (req) => {
-      const text = JSON.stringify(req.messages);
-      if (!text.includes('tool_result')) {
+      const result = toolResult(req.messages);
+      if (!result) {
         return tool('profit_loss', {
           fromDate: '2035-03-01',
           toDate: '2035-03-31',
         });
       }
-      const match = text.match(/"netIncome":(-?\d+(?:\.\d+)?|null)/);
-      return answer(`netIncome:${match?.[1] ?? 'missing'}`);
+      return answer(`netIncome:${JSON.parse(result).netIncome}`);
     };
 
     const own = await ask('Am I making money?').expect(200);
@@ -308,7 +313,6 @@ describe('Ask AI (e2e)', () => {
 
   it('returns an empty ledger for an unknown id and does not leak another tenant account', async () => {
     const other = await signupOrganization('Tenant C Books');
-    await migrate(other.organizationId, other.userId);
     const created = await request(app.getHttpServer())
       .post('/accounts')
       .set(authed(other.organizationId, other.token))
@@ -322,33 +326,31 @@ describe('Ask AI (e2e)', () => {
     const foreignId = created.body.id;
 
     handler = (req) => {
-      const text = JSON.stringify(req.messages);
-      if (!text.includes('tool_result')) {
-        const ids = text.includes(String(foreignId))
-          ? [foreignId]
-          : [999999999];
+      const result = toolResult(req.messages);
+      if (!result) {
         return tool('account_activity', {
           fromDate: '2026-01-01',
           toDate: '2026-12-31',
-          accountsIds: ids,
+          accountsIds: [999999999],
         });
       }
-      return answer(text);
+      const accounts = JSON.parse(result).accounts ?? [];
+      return answer(accounts.length === 0 ? 'empty' : JSON.stringify(accounts));
     };
 
     const unknown = await ask('Show account 999999999').expect(200);
-    expect(unknown.body.answer).toContain('"accounts":[]');
+    expect(unknown.body.answer).toBe('empty');
 
     handler = (req) => {
-      const text = JSON.stringify(req.messages);
-      if (!text.includes('tool_result')) {
+      const result = toolResult(req.messages);
+      if (!result) {
         return tool('account_activity', {
           fromDate: '2026-01-01',
           toDate: '2026-12-31',
           accountsIds: [foreignId],
         });
       }
-      return answer(text);
+      return answer(result);
     };
     const foreign = await ask(`Show account ${foreignId}`).expect(200);
     expect(foreign.body.answer).not.toContain(foreignName);
@@ -411,7 +413,6 @@ describe('Ask AI (e2e)', () => {
   it('shows a user only their own rows, newest 50, and not another tenant', async () => {
     const otherUser = await inviteUser(true);
     const otherOrg = await signupOrganization('Tenant D Books');
-    await migrate(otherOrg.organizationId, otherOrg.userId);
     const cls = app.get(ClsService);
     const factory = app.get<
       () => { query: () => { insert: (row: object) => Promise<unknown> } }
@@ -420,6 +421,7 @@ describe('Ask AI (e2e)', () => {
     await cls.run(async () => {
       cls.set('organizationId', owner.organizationId);
       cls.set('userId', owner.userId);
+      await cls.resolveProxyProviders();
       const Question = factory();
       for (let index = 0; index < 51; index += 1) {
         await Question.query().insert({
@@ -427,7 +429,7 @@ describe('Ask AI (e2e)', () => {
           question: `cap-${index}`,
           answer: `ans-${index}`,
           chart: null,
-          createdAt: new Date(Date.UTC(2026, 0, 1, 0, 0, index)),
+          createdAt: new Date(Date.UTC(2030, 0, 1, 0, 0, index)),
         });
       }
       await Question.query().insert({
@@ -441,6 +443,7 @@ describe('Ask AI (e2e)', () => {
     await cls.run(async () => {
       cls.set('organizationId', otherOrg.organizationId);
       cls.set('userId', otherOrg.userId);
+      await cls.resolveProxyProviders();
       await factory()
         .query()
         .insert({
@@ -568,7 +571,7 @@ describe('Ask AI (e2e)', () => {
     const signin = await request(app.getHttpServer())
       .post('/auth/signin')
       .send({ email, password })
-      .expect(200);
+      .expect(201);
     const token = signin.body.access_token || signin.body.accessToken;
     const organizationId =
       signup.body.organization_id ||
@@ -646,7 +649,7 @@ describe('Ask AI (e2e)', () => {
     const signin = await request(app.getHttpServer())
       .post('/auth/signin')
       .send({ email, password: '1231231230' })
-      .expect(200);
+      .expect(201);
     return {
       token: signin.body.access_token || signin.body.accessToken,
       userId: Number(signin.body.user_id ?? signin.body.userId),
