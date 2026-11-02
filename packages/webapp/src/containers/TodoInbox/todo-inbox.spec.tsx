@@ -367,6 +367,58 @@ describe('to-do inbox', () => {
     ).toHaveLength(2);
   });
 
+  it('shows only pills for the same direction', async () => {
+    const categorize = vi.fn(async () => undefined);
+    render(
+      <TodoInboxView
+        rows={[
+          {
+            ...withdrawal,
+            amount: 18,
+            payee: 'Northwind',
+            isDepositTransaction: true,
+            isWithdrawalTransaction: false,
+          },
+        ]}
+        pills={[
+          pill,
+          {
+            label: 'Shop',
+            accountId: 9,
+            assignCategory: 'OtherIncome',
+            accountName: 'Sales',
+          },
+          {
+            label: 'Interest',
+            accountId: 10,
+            assignCategory: 'InterestIncome',
+          },
+          { label: 'Came in', accountId: 11, assignCategory: 'Deposit' },
+          {
+            label: 'Personal',
+            accountId: 12,
+            assignCategory: 'OwnerDrawings',
+          },
+        ]}
+        onCategorize={categorize}
+        onCreateRule={async () => undefined}
+        onSomethingElse={() => undefined}
+        onEditRule={() => undefined}
+      />,
+    );
+    expect(screen.queryByRole('button', { name: 'Farm' })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Personal' })).toBeNull();
+    expect(screen.getByRole('button', { name: 'Shop' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Interest' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Came in' })).toBeTruthy();
+    await click(screen.getByRole('button', { name: 'Shop' }));
+    const sent = categorize.mock.calls.map(
+      (call) => (call[1] as { transactionType: string }).transactionType,
+    );
+    expect(sent).toEqual(['other_income']);
+    expect(sent).not.toContain('other_expense');
+  });
+
   it('ignores a second tap while a save is in flight', async () => {
     let release: () => void = () => undefined;
     const gate = new Promise<void>((resolve) => {
