@@ -15,48 +15,35 @@ export interface AnswerPill {
   accountName?: string;
 }
 
-export type QuestionAnswer =
-  | (AnswerPill & { kind: 'pill' })
-  | { kind: 'else'; label: 'Something else' };
-
-export interface Question {
-  text: string;
-  answers: QuestionAnswer[];
-}
-
-export function formatTodoAmount(amount: number | null | undefined): string {
-  const abs = Math.abs(Number(amount) || 0);
-  const whole = Math.round(abs * 100) % 100 === 0;
-  const formatted = whole
-    ? abs.toLocaleString('en-US', { maximumFractionDigits: 0 })
-    : abs.toLocaleString('en-US', {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2,
-      });
-  return `$${formatted}`;
-}
-
 const MONEY_IN = new Set(['Deposit', 'OtherIncome', 'InterestIncome']);
 const MONEY_OUT = new Set(['Expense', 'OwnerDrawings']);
 
-function moneyIn(tx: QuestionTransaction): boolean {
-  if (tx.isDepositTransaction) {
-    return true;
-  }
-  if (tx.isWithdrawalTransaction) {
-    return false;
-  }
-  return Number(tx.amount) > 0;
-}
+export const moneyIn = (tx: QuestionTransaction) =>
+  tx.isDepositTransaction
+    ? true
+    : tx.isWithdrawalTransaction
+      ? false
+      : Number(tx.amount) > 0;
 
-export function who(tx: QuestionTransaction): string {
-  const payee = tx.payee?.replace(/\s+/g, ' ').trim();
-  if (payee) {
-    return payee;
-  }
-  const description = tx.description?.replace(/\s+/g, ' ').trim();
-  return description || 'this charge';
-}
+export const formatTodoAmount = (amount?: number | null) => {
+  const abs = Math.abs(Number(amount) || 0);
+  const digits = Math.round(abs * 100) % 100 === 0;
+  return `$${abs.toLocaleString('en-US', digits ? { maximumFractionDigits: 0 } : { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+};
+
+export const who = (tx: QuestionTransaction) =>
+  (tx.payee?.trim() || tx.description || '').replace(/\s+/g, ' ').trim();
+
+export const buildQuestion = (tx: QuestionTransaction) =>
+  `Was this ${formatTodoAmount(tx.amount)} ${moneyIn(tx) ? 'from' : 'at'} ${who(tx)} for…?`;
+
+export const pillsForDirection = <T extends { assignCategory: string }>(
+  tx: QuestionTransaction,
+  pills?: T[] | null,
+) =>
+  (pills ?? []).filter((pill) =>
+    (moneyIn(tx) ? MONEY_IN : MONEY_OUT).has(pill.assignCategory),
+  );
 
 export function parseAnswerChoices(
   raw: unknown,
@@ -64,19 +51,14 @@ export function parseAnswerChoices(
 ): AnswerPill[] {
   let value = raw;
   if (typeof raw === 'string') {
-    const trimmed = raw.trim();
-    if (!trimmed) {
-      return [];
-    }
+    if (!raw.trim()) return [];
     try {
-      value = JSON.parse(trimmed);
+      value = JSON.parse(raw);
     } catch {
       return [];
     }
   }
-  if (!Array.isArray(value)) {
-    return [];
-  }
+  if (!Array.isArray(value)) return [];
   const known = accounts
     ? new Set(
         accounts
@@ -84,49 +66,14 @@ export function parseAnswerChoices(
           .filter((id): id is number => id != null),
       )
     : null;
-  const pills: AnswerPill[] = [];
-  value.forEach((item) => {
-    if (!item || typeof item !== 'object') {
-      return;
-    }
+  return value.flatMap((item) => {
+    if (!item || typeof item !== 'object') return [];
     const label = String((item as AnswerPill).label ?? '').trim();
     const accountId = Number((item as AnswerPill).accountId);
     const assignCategory = String((item as AnswerPill).assignCategory ?? '');
-    if (!label || !Number.isFinite(accountId) || accountId <= 0) {
-      return;
-    }
-    if (!categoryToTransactionType(assignCategory)) {
-      return;
-    }
-    if (known && !known.has(accountId)) {
-      return;
-    }
-    pills.push({ label, accountId, assignCategory });
+    if (!label || accountId <= 0 || !categoryToTransactionType(assignCategory))
+      return [];
+    if (known && !known.has(accountId)) return [];
+    return [{ label, accountId, assignCategory }];
   });
-  return pills;
-}
-
-export function pillsForDirection<T extends { assignCategory: string }>(
-  tx: QuestionTransaction,
-  pills: T[] | null | undefined,
-): T[] {
-  const allowed = moneyIn(tx) ? MONEY_IN : MONEY_OUT;
-  return (pills ?? []).filter((pill) => allowed.has(pill.assignCategory));
-}
-
-export function buildQuestion(
-  tx: QuestionTransaction,
-  pills: AnswerPill[] | null | undefined,
-): Question {
-  const place = moneyIn(tx) ? 'from' : 'at';
-  const answers: QuestionAnswer[] = [
-    ...(pills ?? [])
-      .filter((pill) => pill && pill.label && pill.accountId)
-      .map((pill) => ({ ...pill, kind: 'pill' as const })),
-    { kind: 'else', label: 'Something else' },
-  ];
-  return {
-    text: `Was this ${formatTodoAmount(tx.amount)} ${place} ${who(tx)} for…?`,
-    answers,
-  };
 }

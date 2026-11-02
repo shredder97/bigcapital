@@ -4,11 +4,6 @@ export interface TodoKindRow {
   assignedAccountId?: number | string | null;
 }
 
-/**
- * A row with no assigned account was not sorted by a rule.
- * The categorize endpoint's expense type is `other_expense` (the value the
- * existing money-out form sends). `expense` is only the label key.
- */
 const CATEGORY_TO_TYPE: Record<string, string> = {
   Expense: 'other_expense',
   OwnerDrawings: 'owner_drawing',
@@ -32,7 +27,7 @@ export const ANSWER_KIND_OPTIONS: Array<{
 }> = [
   { value: 'Expense', label: 'A cost', tip: 'Expense' },
   { value: 'OwnerDrawings', label: 'Personal', tip: 'Owner drawing' },
-  { value: 'OtherIncome', label: 'Money in', tip: 'Other income' },
+  { value: 'OtherIncome', label: 'Other income', tip: 'Other income' },
   { value: 'InterestIncome', label: 'Interest', tip: 'Interest income' },
   { value: 'Deposit', label: 'Money in', tip: 'Deposit' },
 ];
@@ -54,9 +49,5 @@ export function categoryToTransactionType(
   return CATEGORY_TO_TYPE[category] ?? null;
 }
 
-export function categoryTip(category: string | null | undefined): string {
-  if (!category) {
-    return 'that kind';
-  }
-  return CATEGORY_TIP[category] ?? category;
-}
+export const categoryTip = (category?: string | null) =>
+  (category && CATEGORY_TIP[category]) || category || 'that kind';

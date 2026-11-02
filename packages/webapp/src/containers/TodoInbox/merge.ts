@@ -13,10 +13,6 @@ function timeOf(row: { date?: string | number | Date | null }): number {
   return Number.isNaN(ms) ? 0 : ms;
 }
 
-/**
- * Merges one page per bank account, newest first. Drops duplicate ids.
- * The badge is the sum of each page's total, not the deduped length.
- */
 export function mergeTodoPages<
   T extends { id?: number | null; date?: string | null },
 >(pages: Array<TodoPage<T> | null | undefined>): MergedTodos<T> {

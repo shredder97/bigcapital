@@ -9,10 +9,6 @@ const GENERIC_BANK_WORDS = new Set([
   'online',
 ]);
 
-/**
- * Merchant text a bank rule can match. Trims, collapses spaces, and drops
- * trailing store numbers. Returns null when the text is too short or generic.
- */
 export function toRuleMatchText(
   description: string | null | undefined,
 ): string | null {

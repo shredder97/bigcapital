@@ -8,7 +8,6 @@ import type { ExistingRule } from './planRule';
 import type { AnswerPill } from './question';
 import type { AccountSelectModel } from '@/components/Accounts/AccountsMultiSelect';
 import type { CreateBankRuleBody } from '@bigcapital/sdk-ts';
-import { DialogsName } from '@/constants/dialogs';
 import { DRAWERS } from '@/constants/drawers';
 import { CategorizeTransactionDrawer } from '@/containers/CashFlow/CategorizeTransaction/drawers/CategorizeTransactionDrawer/CategorizeTransactionDrawer';
 import { useAccounts } from '@/hooks/query/accounts/queries';
@@ -18,7 +17,7 @@ import {
   useSaveSettings,
   useSettingCashFlow,
 } from '@/hooks/query/settings/queries';
-import { useDialogActions, useDrawerActions } from '@/hooks/state';
+import { useDrawerActions } from '@/hooks/state';
 import { useSetTransactionsToCategorizeSelected } from '@/hooks/state/banking';
 
 const CHOICES_KEY = 'todo_answer_choices';
@@ -36,7 +35,6 @@ export function TodoInboxPage() {
   const { mutateAsync: createRule } = useCreateBankRule();
   const { mutateAsync: saveSettings, isPending: saving } = useSaveSettings();
   const { openDrawer } = useDrawerActions();
-  const { openDialog } = useDialogActions();
   const setSelected = useSetTransactionsToCategorizeSelected();
   const [saveFailed, setSaveFailed] = useState(false);
 
@@ -87,9 +85,6 @@ export function TodoInboxPage() {
             uncategorizedTransactionId: id,
           });
         }}
-        onEditRule={(ruleId) =>
-          openDialog(DialogsName.BankRuleForm, { bankRuleId: ruleId })
-        }
         choices={
           <AnswerChoices
             choices={pills}

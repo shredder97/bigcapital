@@ -1,7 +1,6 @@
 import { toRuleMatchText } from './ruleMatch';
 
 export type RuleDirection = 'deposit' | 'withdrawal';
-
 export interface RuleTransaction {
   amount?: number | null;
   payee?: string | null;
@@ -9,13 +8,11 @@ export interface RuleTransaction {
   isDepositTransaction?: boolean;
   isWithdrawalTransaction?: boolean;
 }
-
 export interface RulePill {
   label: string;
   accountId: number;
   assignCategory: string;
 }
-
 export interface ExistingRule {
   id: number;
   applyIfTransactionType?: string | null;
@@ -27,7 +24,6 @@ export interface ExistingRule {
     value?: string | null;
   }> | null;
 }
-
 export interface RuleDto {
   name: string;
   order: number;
@@ -41,95 +37,51 @@ export interface RuleDto {
   assignCategory: string;
   assignAccountId: number;
 }
-
 export type RulePlan =
   | { kind: 'create'; dto: RuleDto }
   | { kind: 'skip' }
   | { kind: 'conflict'; ruleId: number }
   | { kind: 'none' };
 
-export function transactionDirection(tx: RuleTransaction): RuleDirection {
-  if (tx.isDepositTransaction) {
-    return 'deposit';
-  }
-  if (tx.isWithdrawalTransaction) {
-    return 'withdrawal';
-  }
-  return Number(tx.amount) > 0 ? 'deposit' : 'withdrawal';
-}
-
-export function matchSource(tx: RuleTransaction): {
-  field: 'description' | 'payee';
-  text: string | null;
-} {
+const sourceOf = (tx: RuleTransaction) => {
   const payee = tx.payee?.trim();
-  if (payee) {
-    return { field: 'payee', text: toRuleMatchText(payee) };
-  }
-  return { field: 'description', text: toRuleMatchText(tx.description) };
-}
+  const field = (payee ? 'payee' : 'description') as 'payee' | 'description';
+  return { field, text: toRuleMatchText(payee || tx.description) };
+};
 
-function sameMatch(
-  rule: ExistingRule,
-  field: string,
-  value: string,
-  direction: RuleDirection,
-): boolean {
-  if ((rule.applyIfTransactionType || '').toLowerCase() !== direction) {
-    return false;
-  }
-  return (rule.conditions ?? []).some((condition) => {
-    return (
-      (condition.field || '').toLowerCase() === field &&
-      (condition.comparator || '').toLowerCase() === 'contains' &&
-      (condition.value || '').toLowerCase() === value.toLowerCase()
-    );
-  });
-}
-
-/**
- * Decides whether a pill tap should create a rule, skip, or ask to edit.
- * Account scope is ignored: an account-scoped rule with the same text counts.
- */
 export function planRule(
   tx: RuleTransaction,
   pill: RulePill,
-  existingRules: ExistingRule[],
+  existingRules: ExistingRule[] = [],
   everyTime: boolean,
 ): RulePlan {
-  if (!everyTime) {
-    return { kind: 'none' };
-  }
-  const source = matchSource(tx);
-  if (!source.text) {
-    return { kind: 'none' };
-  }
-  const direction = transactionDirection(tx);
-  const matches = (existingRules ?? []).filter((rule) =>
-    sameMatch(rule, source.field, source.text as string, direction),
+  const source = sourceOf(tx);
+  const dir: RuleDirection = tx.isDepositTransaction ? 'deposit' : 'withdrawal';
+  if (!everyTime || !source.text) return { kind: 'none' };
+  const matches = existingRules.filter(
+    (rule) =>
+      (rule.applyIfTransactionType || '').toLowerCase() === dir &&
+      (rule.conditions ?? []).some(
+        (condition) =>
+          (condition.field || '').toLowerCase() === source.field &&
+          (condition.comparator || '').toLowerCase() === 'contains' &&
+          (condition.value || '').toLowerCase() === source.text!.toLowerCase(),
+      ),
   );
   const conflict = matches.find(
     (rule) => Number(rule.assignAccountId) !== Number(pill.accountId),
   );
-  if (conflict) {
-    return { kind: 'conflict', ruleId: conflict.id };
-  }
-  if (matches.length > 0) {
-    return { kind: 'skip' };
-  }
+  if (conflict) return { kind: 'conflict', ruleId: conflict.id };
+  if (matches.length) return { kind: 'skip' };
   return {
     kind: 'create',
     dto: {
       name: `${source.text} → ${pill.label}`,
       order: 1,
-      applyIfTransactionType: direction,
+      applyIfTransactionType: dir,
       conditionsType: 'and',
       conditions: [
-        {
-          field: source.field,
-          comparator: 'contains',
-          value: source.text,
-        },
+        { field: source.field, comparator: 'contains', value: source.text },
       ],
       assignCategory: pill.assignCategory,
       assignAccountId: pill.accountId,

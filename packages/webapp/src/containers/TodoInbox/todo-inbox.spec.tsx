@@ -243,50 +243,30 @@ describe('to-do inbox', () => {
   });
 
   it('asks "at" when money went out', () => {
-    expect(buildQuestion(withdrawal, [pill]).text).toBe(
-      'Was this $42 at Home Depot for…?',
-    );
+    expect(buildQuestion(withdrawal)).toBe('Was this $42 at Home Depot for…?');
   });
 
   it('asks "from" when money came in', () => {
     expect(
-      buildQuestion(
-        {
-          ...withdrawal,
-          amount: 18,
-          payee: 'Northwind',
-          isDepositTransaction: true,
-          isWithdrawalTransaction: false,
-        },
-        [pill],
-      ).text,
+      buildQuestion({
+        ...withdrawal,
+        amount: 18,
+        payee: 'Northwind',
+        isDepositTransaction: true,
+        isWithdrawalTransaction: false,
+      }),
     ).toBe('Was this $18 from Northwind for…?');
   });
 
   it('formats the amount', () => {
-    expect(
-      buildQuestion({ ...withdrawal, amount: -42.5 }, [pill]).text,
-    ).toContain('$42.50');
-    expect(
-      buildQuestion({ ...withdrawal, amount: -1200 }, [pill]).text,
-    ).toContain('$1,200');
+    expect(buildQuestion({ ...withdrawal, amount: -42.5 })).toContain('$42.50');
+    expect(buildQuestion({ ...withdrawal, amount: -1200 })).toContain('$1,200');
   });
 
-  it('falls back to the description and always offers something else', () => {
-    const question = buildQuestion(
-      { ...withdrawal, payee: '  ', description: 'Blue Bottle' },
-      [pill],
-    );
-    expect(question.text).toBe('Was this $42 at Blue Bottle for…?');
-    expect(question.answers.map((answer) => answer.label)).toContain(
-      'Something else',
-    );
-  });
-
-  it('offers only something else when there are no pills', () => {
-    expect(buildQuestion(withdrawal, []).answers).toEqual([
-      { kind: 'else', label: 'Something else' },
-    ]);
+  it('falls back to the description', () => {
+    expect(
+      buildQuestion({ ...withdrawal, payee: '  ', description: 'Blue Bottle' }),
+    ).toBe('Was this $42 at Blue Bottle for…?');
   });
 
   it('drops bad or stale answer choices without crashing', () => {
