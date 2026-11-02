@@ -101,6 +101,11 @@ describe('to-do inbox', () => {
     expect(toRuleMatchText('a b')).toBeNull();
   });
 
+  it('returns null for the generic word purchase', () => {
+    expect(toRuleMatchText('purchase')).toBeNull();
+    expect(toRuleMatchText('  Purchase  ')).toBeNull();
+  });
+
   it('returns null for generic bank words and empty text', () => {
     expect(toRuleMatchText('  payment  ')).toBeNull();
     expect(toRuleMatchText('ACH')).toBeNull();
