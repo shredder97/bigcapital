@@ -1316,6 +1316,18 @@ export const getDashboardRoutes = () => [
     breadcrumb: 'Bank Rules',
     subscriptionActive: [SUBSCRIPTION_TYPE.MAIN],
   },
+  {
+    path: '/todo',
+    exact: true,
+    component: lazy(() =>
+      import('@/containers/TodoInbox/TodoInboxPage').then((m) => ({
+        default: m.TodoInboxPage,
+      })),
+    ),
+    pageTitle: 'To-do',
+    breadcrumb: 'To-do',
+    subscriptionActive: [SUBSCRIPTION_TYPE.MAIN],
+  },
   // Homepage
   {
     path: `/`,

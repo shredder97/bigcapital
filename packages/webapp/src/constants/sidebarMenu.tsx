@@ -26,6 +26,7 @@ import {
   ISidebarMenuItemType,
   ISidebarMenuOverlayIds,
 } from '@/containers/Dashboard/Sidebar/interfaces';
+import { TodoNavLabel } from '@/containers/TodoInbox/TodoNavLabel';
 
 export interface SidebarMenuItemPermission {
   subject: string;
@@ -468,6 +469,15 @@ export const SidebarMenu: SidebarMenuItem[] = [
         text: <T id={'sidebar.banking'} />,
         type: ISidebarMenuItemType.Group,
         children: [
+          {
+            text: <TodoNavLabel />,
+            href: '/todo',
+            type: ISidebarMenuItemType.Link,
+            permission: {
+              subject: AbilitySubject.Cashflow,
+              ability: CashflowAction.View,
+            },
+          },
           {
             text: <T id={'sidebar.bank_accounts'} />,
             href: '/cashflow-accounts',

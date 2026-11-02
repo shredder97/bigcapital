@@ -1,0 +1,17 @@
+@font-face {
+  font-family: 'Instrument Serif';
+  src: url('../../style/fonts/instrument-serif/InstrumentSerif-Regular.woff2')
+    format('woff2');
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Inter Tight';
+  src: url('../../style/fonts/inter-tight/InterTight-Regular.woff2')
+    format('woff2');
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+}

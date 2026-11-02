@@ -190,6 +190,9 @@ export const SettingsOptions = {
     auto_increment: {
       type: 'boolean',
     },
+    todo_answer_choices: {
+      type: 'string',
+    },
   },
   credit_note: {
     next_number: {
