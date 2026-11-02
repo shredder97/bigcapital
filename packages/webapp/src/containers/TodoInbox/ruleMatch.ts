@@ -1,5 +1,6 @@
 const GENERIC_BANK_WORDS = new Set([
   'payment',
+  'purchase',
   'transfer',
   'deposit',
   'pos',
