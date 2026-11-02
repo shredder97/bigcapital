@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import './TodoInbox.css';
 import { AnswerChoices } from './AnswerChoices';
 import { parseAnswerChoices } from './question';
@@ -42,6 +42,7 @@ export function TodoInboxPage() {
   const { openDrawer } = useDrawerActions();
   const { openDialog } = useDialogActions();
   const setSelected = useSetTransactionsToCategorizeSelected();
+  const [saveFailed, setSaveFailed] = useState(false);
 
   const pills = useMemo(() => {
     const raw = settings.data?.todoAnswerChoices;
@@ -79,7 +80,7 @@ export function TodoInboxPage() {
         pills={pills}
         rules={rules as ExistingRule[]}
         loading={inbox.loading}
-        error={inbox.error}
+        error={inbox.error || saveFailed}
         onCategorize={async (id, values) => {
           await categorize({ id, values });
         }}
@@ -99,7 +100,8 @@ export function TodoInboxPage() {
             accounts={accounts}
             saving={saving}
             onSave={(next) => {
-              saveChoices(next).catch(() => undefined);
+              setSaveFailed(false);
+              saveChoices(next).catch(() => setSaveFailed(true));
             }}
           />
         }
