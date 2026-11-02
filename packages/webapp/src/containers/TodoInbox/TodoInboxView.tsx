@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { answerTodo } from './answer';
 import { categoryTip, categoryToTransactionType, toTodoKind } from './kind';
 import { matchSource, planRule } from './planRule';
@@ -98,6 +98,8 @@ export function TodoInboxView({
   const [remember, setRemember] = useState<Record<number, boolean>>({});
   const [failed, setFailed] = useState(false);
   const [conflictId, setConflictId] = useState<number | null>(null);
+  const [pendingId, setPendingId] = useState<number | null>(null);
+  const pendingRef = useRef<number | null>(null);
   const visible = rows.filter((row) => !gone.includes(row.id));
   const showError = failed || error;
 
@@ -111,9 +113,23 @@ export function TodoInboxView({
       date: dateOnly(values.date || row.date),
     });
 
+  const begin = (id: number) => {
+    if (pendingRef.current != null) {
+      return false;
+    }
+    pendingRef.current = id;
+    setPendingId(id);
+    return true;
+  };
+
+  const end = () => {
+    pendingRef.current = null;
+    setPendingId(null);
+  };
+
   const confirm = async (row: TodoRow) => {
     const transactionType = categoryToTransactionType(row.assignedCategory);
-    if (!transactionType || row.assignedAccountId == null) {
+    if (!transactionType || row.assignedAccountId == null || !begin(row.id)) {
       return;
     }
     try {
@@ -124,16 +140,20 @@ export function TodoInboxView({
             transactionType,
             date: dateOnly(row.date),
           }),
-        createRule: () => Promise.resolve(),
         plan: { kind: 'none' },
       });
       finish(row.id);
     } catch {
       setFailed(true);
+    } finally {
+      end();
     }
   };
 
   const choose = async (row: TodoRow, pill: AnswerPill) => {
+    if (!begin(row.id)) {
+      return;
+    }
     const plan = planRule(row, pill, rules, remember[row.id] === true);
     try {
       await answerTodo({
@@ -144,9 +164,8 @@ export function TodoInboxView({
               categoryToTransactionType(pill.assignCategory) ?? '',
             date: dateOnly(row.date),
           }),
-        createRule: () =>
-          plan.kind === 'create' ? onCreateRule(plan.dto) : Promise.resolve(),
-        plan,
+        createRule:
+          plan.kind === 'create' ? () => onCreateRule(plan.dto) : undefined,
       });
       if (plan.kind === 'conflict') {
         setConflictId(plan.ruleId);
@@ -154,6 +173,8 @@ export function TodoInboxView({
       finish(row.id);
     } catch {
       setFailed(true);
+    } finally {
+      end();
     }
   };
 
@@ -196,6 +217,7 @@ export function TodoInboxView({
           kind === 'check'
             ? categoryToTransactionType(row.assignedCategory)
             : null;
+        const busy = pendingId === row.id;
         return (
           <section className="todo-item" key={row.id}>
             <h2 className="todo-question">{question}</h2>
@@ -204,6 +226,7 @@ export function TodoInboxView({
                 <button
                   type="button"
                   className="todo-pill"
+                  disabled={busy}
                   onClick={() => confirm(row)}
                 >
                   Confirm
@@ -217,6 +240,7 @@ export function TodoInboxView({
                         <button
                           type="button"
                           className="todo-pill"
+                          disabled={busy}
                           onClick={() => choose(row, pill)}
                         >
                           {pill.label}
@@ -239,6 +263,7 @@ export function TodoInboxView({
               <button
                 type="button"
                 className="todo-pill"
+                disabled={busy}
                 onClick={() => onSomethingElse(row.id)}
               >
                 Something else
@@ -248,6 +273,7 @@ export function TodoInboxView({
               <label className="todo-remember">
                 <input
                   type="checkbox"
+                  disabled={busy}
                   checked={remember[row.id] === true}
                   onChange={(event) =>
                     setRemember((current) => ({
