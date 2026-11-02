@@ -99,6 +99,7 @@ export function TodoInboxView({
   const [failed, setFailed] = useState(false);
   const [conflictId, setConflictId] = useState<number | null>(null);
   const [pendingId, setPendingId] = useState<number | null>(null);
+  const [ruleRetry, setRuleRetry] = useState<RuleDto | null>(null);
   const pendingRef = useRef<number | null>(null);
   const visible = rows.filter((row) => !gone.includes(row.id));
   const showError = failed || error;
@@ -155,15 +156,18 @@ export function TodoInboxView({
       return;
     }
     const plan = planRule(row, pill, rules, remember[row.id] === true);
+    let categorized = false;
     try {
       await answerTodo({
-        categorize: () =>
-          categorizeRow(row, {
+        categorize: async () => {
+          await categorizeRow(row, {
             creditAccountId: pill.accountId,
             transactionType:
               categoryToTransactionType(pill.assignCategory) ?? '',
             date: dateOnly(row.date),
-          }),
+          });
+          categorized = true;
+        },
         createRule:
           plan.kind === 'create' ? () => onCreateRule(plan.dto) : undefined,
       });
@@ -171,6 +175,25 @@ export function TodoInboxView({
         setConflictId(plan.ruleId);
       }
       finish(row.id);
+    } catch {
+      if (categorized && plan.kind === 'create') {
+        finish(row.id);
+        setRuleRetry(plan.dto);
+      } else {
+        setFailed(true);
+      }
+    } finally {
+      end();
+    }
+  };
+
+  const saveRule = async () => {
+    if (!ruleRetry || !begin(-1)) {
+      return;
+    }
+    try {
+      await onCreateRule(ruleRetry);
+      setRuleRetry(null);
     } catch {
       setFailed(true);
     } finally {
@@ -197,6 +220,13 @@ export function TodoInboxView({
       ) : null}
       {!loading && visible.length === 0 ? (
         <p className="todo-empty">All done! Nothing to check.</p>
+      ) : null}
+      {ruleRetry ? (
+        <p className="todo-note">
+          <button type="button" onClick={() => saveRule()}>
+            Save rule
+          </button>
+        </p>
       ) : null}
       {conflictId != null ? (
         <p className="todo-note">
