@@ -224,6 +224,11 @@ describe('to-do inbox', () => {
     expect(toTodoKind({ assignedAccountId: 12 })).toBe('check');
   });
 
+  it('gives every answer kind its own label', () => {
+    const labels = ANSWER_KIND_OPTIONS.map((option) => option.label);
+    expect(new Set(labels).size).toBe(labels.length);
+  });
+
   it('maps all five categories', () => {
     expect(categoryToTransactionType('Expense')).toBe('other_expense');
     expect(categoryToTransactionType('OwnerDrawings')).toBe('owner_drawing');
