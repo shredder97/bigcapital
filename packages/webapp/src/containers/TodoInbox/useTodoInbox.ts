@@ -1,14 +1,14 @@
 import { fetchAccountUncategorizedTransactions } from '@bigcapital/sdk-ts';
 import { useQueries } from '@tanstack/react-query';
+import { useMemo } from 'react';
 import { mergeTodoPages } from './merge';
 import type { TodoRow } from './TodoInboxView';
 import { useCashflowAccounts } from '@/hooks/query/cashflow-accounts/queries';
 import { cashflowAccountsKeys } from '@/hooks/query/cashflow-accounts/query-keys';
 import { useApiFetcher } from '@/hooks/useRequest';
 
-const PAGE = { page: 1, pageSize: 100 };
-
-export function useTodoInbox() {
+export function useTodoInbox(pageSize = 100) {
+  const page = useMemo(() => ({ page: 1, pageSize }), [pageSize]);
   const fetcher = useApiFetcher({ enableCamelCaseTransform: true });
   const accountsQuery = useCashflowAccounts();
   const accounts = Array.isArray(accountsQuery.data) ? accountsQuery.data : [];
@@ -18,9 +18,9 @@ export function useTodoInbox() {
 
   const results = useQueries({
     queries: ids.map((accountId) => ({
-      queryKey: cashflowAccountsKeys.uncategorizedInfinity(accountId, PAGE),
+      queryKey: cashflowAccountsKeys.uncategorizedInfinity(accountId, page),
       queryFn: () =>
-        fetchAccountUncategorizedTransactions(fetcher, accountId, PAGE),
+        fetchAccountUncategorizedTransactions(fetcher, accountId, page),
     })),
   });
 

@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+// @vitest-environment happy-dom
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
@@ -10,7 +10,7 @@ import {
   categoryToTransactionType,
   toTodoKind,
 } from './kind';
-import { loadTodoInbox } from './merge';
+import { mergeTodoPages } from './merge';
 import { planRule } from './planRule';
 import { buildQuestion, parseAnswerChoices } from './question';
 import { toRuleMatchText } from './ruleMatch';
@@ -543,17 +543,16 @@ describe('to-do inbox', () => {
         pagination: { total: 5 },
       },
     };
-    const merged = await loadTodoInbox([1, 2, 3], async (id) => pages[id]);
+    const merged = mergeTodoPages([pages[1], pages[2], pages[3]]);
     expect(merged.rows.map((row) => row.id)).toEqual([3, 4, 1, 2]);
     expect(merged.badge).toBe(8);
-    const duplicated = await loadTodoInbox([1, 2], async (id) =>
-      id === 2
-        ? {
-            data: [{ id: 1, date: '2026-01-02', amount: -5 }],
-            pagination: { total: 3 },
-          }
-        : pages[1],
-    );
+    const duplicated = mergeTodoPages([
+      pages[1],
+      {
+        data: [{ id: 1, date: '2026-01-02', amount: -5 }],
+        pagination: { total: 3 },
+      },
+    ]);
     expect(duplicated.rows.map((row) => row.id)).toEqual([1, 2]);
     expect(duplicated.badge).toBe(5);
   });

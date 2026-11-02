@@ -23,10 +23,6 @@ import { useSetTransactionsToCategorizeSelected } from '@/hooks/state/banking';
 
 const CHOICES_KEY = 'todo_answer_choices';
 
-function readChoices(value: unknown, accounts: Array<{ id?: number | null }>) {
-  return parseAnswerChoices(value, accounts);
-}
-
 export function TodoInboxPage() {
   const inbox = useTodoInbox();
   const accountsQuery = useAccounts();
@@ -46,7 +42,7 @@ export function TodoInboxPage() {
 
   const pills = useMemo(() => {
     const raw = settings.data?.todoAnswerChoices;
-    return readChoices(raw, accounts).map((pill) => ({
+    return parseAnswerChoices(raw, accounts).map((pill) => ({
       ...pill,
       accountName: accounts.find((account) => account.id === pill.accountId)
         ?.name,

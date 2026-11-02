@@ -34,7 +34,7 @@ export const ANSWER_KIND_OPTIONS: Array<{
   { value: 'OwnerDrawings', label: 'Personal', tip: 'Owner drawing' },
   { value: 'OtherIncome', label: 'Money in', tip: 'Other income' },
   { value: 'InterestIncome', label: 'Interest', tip: 'Interest income' },
-  { value: 'Deposit', label: 'Money that came in', tip: 'Deposit' },
+  { value: 'Deposit', label: 'Money in', tip: 'Deposit' },
 ];
 
 export function toTodoKind(row: TodoKindRow): TodoKind {

@@ -36,13 +36,3 @@ export function mergeTodoPages<
   rows.sort((a, b) => timeOf(b) - timeOf(a));
   return { rows, badge };
 }
-
-export async function loadTodoInbox<
-  T extends { id?: number | null; date?: string | null },
->(
-  accountIds: number[],
-  fetchPage: (accountId: number) => Promise<TodoPage<T>>,
-): Promise<MergedTodos<T>> {
-  const pages = await Promise.all(accountIds.map((id) => fetchPage(id)));
-  return mergeTodoPages(pages);
-}

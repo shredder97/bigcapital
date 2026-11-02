@@ -49,7 +49,7 @@ function moneyIn(tx: QuestionTransaction): boolean {
   return Number(tx.amount) > 0;
 }
 
-function who(tx: QuestionTransaction): string {
+export function who(tx: QuestionTransaction): string {
   const payee = tx.payee?.replace(/\s+/g, ' ').trim();
   if (payee) {
     return payee;
