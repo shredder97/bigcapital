@@ -23,5 +23,6 @@ import { TenancyModule } from '@/modules/Tenancy/Tenancy.module';
     GeneralLedgerMeta,
   ],
   controllers: [GeneralLedgerController],
+  exports: [GeneralLedgerApplication],
 })
 export class GeneralLedgerModule {}
