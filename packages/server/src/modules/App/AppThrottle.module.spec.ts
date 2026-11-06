@@ -154,6 +154,12 @@ class ProbeController {
   ai() {
     return { ok: true };
   }
+
+  @Throttle({ default: { limit: 2, ttl: 60000 } })
+  @Get('default-limited')
+  defaultLimited() {
+    return { ok: true };
+  }
 }
 
 describe('ai throttler', () => {
@@ -218,5 +224,18 @@ describe('ai throttler', () => {
       .set('x-user-id', '42')
       .set('x-forwarded-for', '192.0.2.56')
       .expect(200);
+  });
+
+  it('keys the default throttler by IP when the user stays the same', async () => {
+    const hit = (ip: string) =>
+      request(app.getHttpServer())
+        .get('/probe/default-limited')
+        .set('x-user-id', '99')
+        .set('x-forwarded-for', ip);
+
+    await hit('203.0.113.10').expect(200);
+    await hit('203.0.113.10').expect(200);
+    await hit('203.0.113.10').expect(429);
+    await hit('198.51.100.20').expect(200);
   });
 });
