@@ -9,7 +9,7 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
-import { Throttle } from '@nestjs/throttler';
+import { Throttle, ThrottlerGuard } from '@nestjs/throttler';
 import { Request } from 'express';
 import { ApiCommonHeaders } from '@/common/decorators/ApiCommonHeaders';
 import { AuthorizationGuard } from '../Roles/Authorization.guard';
@@ -21,7 +21,7 @@ type Ability = { can: (action: string, subject: string) => boolean };
 @Controller('ai')
 @ApiTags('AI')
 @ApiCommonHeaders()
-@UseGuards(AuthorizationGuard)
+@UseGuards(AuthorizationGuard, ThrottlerGuard)
 export class AiAskController {
   constructor(private readonly aiAsk: AiAskService) {}
 

@@ -2,29 +2,22 @@ import { rawRequest } from '@bigcapital/sdk-ts';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useApiFetcher } from '@/hooks/useRequest';
 
-export interface AiChart {
+export type AiChart = {
   type: 'bar';
   title?: string;
   labels: string[];
   values: number[];
-}
-
-export interface AiAnswer {
-  answer: string;
-  chart: AiChart | null;
-}
-
-export interface AiHistoryRow {
+};
+export type AiAnswer = { answer: string; chart: AiChart | null };
+export type AiHistoryRow = AiAnswer & {
   id: number;
   question: string;
-  answer: string;
-  chart: AiChart | null;
   createdAt: string;
-}
+};
 
 const NOT_CONFIGURED = "AI helper isn't set up on this server.";
 
-async function requestAi<T>(
+export async function requestAi<T>(
   fetcher: ReturnType<typeof useApiFetcher>,
   method: string,
   path: string,
@@ -34,11 +27,7 @@ async function requestAi<T>(
     return await rawRequest<T>(fetcher, method, path, body);
   } catch (error) {
     if (error instanceof Error && error.message.startsWith('HTTP 503')) {
-      const notConfigured = new Error(NOT_CONFIGURED) as Error & {
-        status: number;
-      };
-      notConfigured.status = 503;
-      throw notConfigured;
+      throw Object.assign(new Error(NOT_CONFIGURED), { status: 503 });
     }
     throw error;
   }
@@ -56,11 +45,11 @@ export function useAiQuestions(enabled: boolean) {
 
 export function useAskQuestion() {
   const fetcher = useApiFetcher({ enableCamelCaseTransform: true });
-  const queryClient = useQueryClient();
+  const client = useQueryClient();
   return useMutation({
     mutationFn: (question: string) =>
       requestAi<AiAnswer>(fetcher, 'POST', '/api/ai/ask', { question }),
     onSuccess: () =>
-      queryClient.invalidateQueries({ queryKey: ['ai', 'questions'] }),
+      client.invalidateQueries({ queryKey: ['ai', 'questions'] }),
   });
 }

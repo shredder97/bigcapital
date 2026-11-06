@@ -29,17 +29,16 @@ type Chart = {
   labels: string[];
   values: number[];
 } | null;
-const upstream = () =>
-  new BadGatewayException({
-    code: 'AI_UPSTREAM_ERROR',
-    message: 'The AI helper could not answer that question.',
-  });
-const notConfigured = () =>
-  new ServiceUnavailableException({
-    code: 'AI_NOT_CONFIGURED',
-    message: "AI helper isn't set up on this server.",
-  });
-
+const httpError = (status: 502 | 503) =>
+  status === 503
+    ? new ServiceUnavailableException({
+        code: 'AI_NOT_CONFIGURED',
+        message: "AI helper isn't set up on this server.",
+      })
+    : new BadGatewayException({
+        code: 'AI_UPSTREAM_ERROR',
+        message: 'The AI helper could not answer that question.',
+      });
 function validateChart(chart: any): Chart {
   const { labels, values, title, type } = chart ?? {};
   const ok =
@@ -55,7 +54,6 @@ function validateChart(chart: any): Chart {
     ? { type: 'bar', labels, values, ...(title ? { title } : {}) }
     : null;
 }
-
 function walk(node: any): any {
   if (!node || typeof node !== 'object') return null;
   const children = (node.children || []).map(walk).filter(Boolean);
@@ -66,7 +64,6 @@ function walk(node: any): any {
     ...(children.length ? { children } : {}),
   };
 }
-
 function net(nodes: any[] = []): number | null {
   for (const node of nodes || []) {
     if (node?.id === 'NET_INCOME') {
@@ -78,15 +75,6 @@ function net(nodes: any[] = []): number | null {
   }
   return null;
 }
-
-const txOf = ({ date, amount, debit, credit, note }) => ({
-  date,
-  amount,
-  debit,
-  credit,
-  note,
-});
-
 @Injectable()
 export class AiAskService {
   private readonly logger = new Logger(AiAskService.name);
@@ -97,9 +85,8 @@ export class AiAskService {
     @Inject(AiQuestion.name)
     private readonly aiQuestion: TenantModelProxy<typeof AiQuestion>,
   ) {}
-
   async ask(question: string, ability?: AbilityLike) {
-    if (!process.env.ANTHROPIC_API_KEY) throw notConfigured();
+    if (!process.env.ANTHROPIC_API_KEY) throw httpError(503);
     const started = Date.now();
     const names: string[] = [];
     const abort = new AbortController();
@@ -107,7 +94,7 @@ export class AiAskService {
     try {
       const messages: any[] = [{ role: 'user', content: question }];
       for (let calls = 0, tools = 0; ; calls += 1) {
-        if (abort.signal.aborted || calls >= 6) throw upstream();
+        if (abort.signal.aborted || calls >= 6) throw httpError(502);
         const response = await completeAnthropic(anthropicFetch.current, {
           system: SYSTEM,
           messages,
@@ -118,14 +105,15 @@ export class AiAskService {
         const uses = (response.content || []).filter(
           (b) => b?.type === 'tool_use',
         );
-        if (!uses.length) throw upstream();
+        if (!uses.length) throw httpError(502);
         const results = [];
         for (const use of uses) {
-          if (abort.signal.aborted || ++tools > 5) throw upstream();
+          if (abort.signal.aborted || ++tools > 5) throw httpError(502);
           names.push(use.name);
-          if (use.name === 'answer' && typeof use.input?.answer === 'string') {
+          const text = use.input?.answer;
+          if (use.name === 'answer' && typeof text === 'string') {
             const parsed = {
-              answer: use.input.answer,
+              answer: text,
               chart: validateChart(use.input.chart),
             };
             await this.save(question, parsed);
@@ -148,7 +136,7 @@ export class AiAskService {
     } catch (error) {
       if (error instanceof BadGatewayException) throw error;
       if (error instanceof ServiceUnavailableException) throw error;
-      throw upstream();
+      throw httpError(502);
     } finally {
       clearTimeout(timer);
       this.logger.log(
@@ -156,12 +144,10 @@ export class AiAskService {
       );
     }
   }
-
   list() {
-    const userId = this.cls.get('userId');
     return this.aiQuestion()
       .query()
-      .where('userId', userId)
+      .where('userId', this.cls.get('userId'))
       .orderBy('createdAt', 'desc')
       .orderBy('id', 'desc')
       .limit(50)
@@ -175,7 +161,6 @@ export class AiAskService {
         })),
       );
   }
-
   private async run(name: string, input: any, ability?: AbilityLike) {
     const permission =
       name === 'profit_loss'
@@ -186,25 +171,21 @@ export class AiAskService {
     if (!permission) return `unknown tool ${name}`;
     if (ability?.can(permission, AbilitySubject.Report) !== true)
       return 'not permitted';
-    const allowed = ['fromDate', 'toDate'];
-    if (name === 'account_activity') allowed.push('accountsIds');
-    return (
-      (this.args(input, allowed) as string | null) ?? this.report(name, input)
-    );
-  }
-
-  private args(input: any, allowed: string[]) {
     if (!input || typeof input !== 'object' || Array.isArray(input))
       return 'invalid arguments';
+    const allowed = [
+      'fromDate',
+      'toDate',
+      ...(name === 'account_activity' ? ['accountsIds'] : []),
+    ];
     const extra = Object.keys(input).find((key) => !allowed.includes(key));
     if (extra) return `unexpected property ${extra}`;
     for (const key of ['fromDate', 'toDate']) {
       if (typeof input[key] !== 'string' || !DATE.test(input[key]))
         return `invalid ${key}`;
     }
-    return null;
+    return this.report(name, input);
   }
-
   private async report(name: string, input: any) {
     const span = {
       fromDate: input.fromDate,
@@ -238,7 +219,15 @@ export class AiAskService {
         accounts: data.map((account) => ({
           id: account.id,
           name: account.name,
-          transactions: (account.transactions || []).map(txOf),
+          transactions: (account.transactions || []).map(
+            ({ date, amount, debit, credit, note }) => ({
+              date,
+              amount,
+              debit,
+              credit,
+              note,
+            }),
+          ),
         })),
       });
     } catch (error) {
@@ -249,7 +238,6 @@ export class AiAskService {
       );
     }
   }
-
   private save(question: string, result: { answer: string; chart: Chart }) {
     return this.aiQuestion()
       .query()

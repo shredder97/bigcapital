@@ -1,8 +1,12 @@
-.ask-launcher {
+.ask-launcher,
+.ask-panel {
   position: fixed;
   right: 16px;
-  bottom: 16px;
   z-index: 20;
+}
+
+.ask-launcher {
+  bottom: 16px;
   border: 0;
   border-radius: 999px;
   padding: 10px 16px;
@@ -11,10 +15,7 @@
 }
 
 .ask-panel {
-  position: fixed;
-  right: 16px;
   bottom: 64px;
-  z-index: 20;
   width: 320px;
   max-height: 420px;
   overflow: auto;
@@ -25,19 +26,16 @@
 
 .ask-panel__title {
   font-family: 'Instrument Serif', serif;
-  font-size: 24px;
 }
 
 .ask-bar-chart__bars {
   display: flex;
   align-items: flex-end;
-  gap: 8px;
   height: 120px;
 }
 
 .ask-bar-chart__col {
   flex: 1;
-  height: 100%;
   display: flex;
   flex-direction: column;
   justify-content: flex-end;

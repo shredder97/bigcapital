@@ -15,7 +15,6 @@ import { AuthenticationMailMesssages } from './AuthMailMessages.esrvice';
 import { LocalStrategy } from './strategies/Local.strategy';
 import { PassportModule } from '@nestjs/passport';
 import { APP_GUARD } from '@nestjs/core';
-import { ThrottlerGuard } from '@nestjs/throttler';
 import { JwtAuthGuard } from './guards/jwt.guard';
 import { AuthMailSubscriber } from './subscribers/AuthMail.subscriber';
 import { BullBoardModule } from '@bull-board/nestjs';
@@ -126,11 +125,6 @@ const models = [
     {
       provide: APP_GUARD,
       useClass: EnsureUserVerifiedGuard,
-    },
-    // After MixedAuth so the ai tracker can read the CLS user id.
-    {
-      provide: APP_GUARD,
-      useClass: ThrottlerGuard,
     },
     AuthMailSubscriber,
   ],
