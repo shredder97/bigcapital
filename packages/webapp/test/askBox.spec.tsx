@@ -41,10 +41,11 @@ describe('BarChart', () => {
       );
     });
 
-    expect(container.querySelectorAll('.ask-bar-chart__bar')).toHaveLength(3);
-    const table = container.querySelector('table');
-    expect(table?.hasAttribute('hidden')).toBe(true);
-    expect(table?.querySelectorAll('tbody tr')).toHaveLength(3);
+    const bars = container.querySelectorAll('.ask-bar-chart__bar');
+    expect(bars).toHaveLength(3);
+    expect(bars[0].getAttribute('aria-label')).toBe('Jan 2');
+    expect(bars[1].getAttribute('aria-label')).toBe('Feb 4');
+    expect(bars[2].getAttribute('aria-label')).toBe('Mar 1');
     expect(container.textContent).toContain('Fuel');
     root.unmount();
   });

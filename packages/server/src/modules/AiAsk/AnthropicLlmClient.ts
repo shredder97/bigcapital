@@ -1,12 +1,9 @@
 export const ANTHROPIC_MODEL = 'claude-sonnet-4-5';
-
-/** Tests replace `current` so the suite never calls Anthropic. */
 export const anthropicFetch = { current: fetch };
 
-/** One Messages API call. Tests pass their own `fetchImpl`. */
 export async function completeAnthropic(fetchImpl: typeof fetch, request: any) {
-  const key = process.env.ANTHROPIC_API_KEY;
   try {
+    const key = process.env.ANTHROPIC_API_KEY;
     if (!key) throw new Error('missing');
     const response = await fetchImpl('https://api.anthropic.com/v1/messages', {
       method: 'POST',
@@ -24,8 +21,7 @@ export async function completeAnthropic(fetchImpl: typeof fetch, request: any) {
         messages: request.messages,
       }),
     });
-    if (!response?.ok) throw new Error('status');
-    const body = await response.json();
+    const body = response?.ok ? await response.json() : null;
     if (!Array.isArray(body?.content)) throw new Error('shape');
     return { stopReason: body.stop_reason ?? null, content: body.content };
   } catch {

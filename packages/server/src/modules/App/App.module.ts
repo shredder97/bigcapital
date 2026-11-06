@@ -1,7 +1,7 @@
 import { MiddlewareConsumer, Module, RequestMethod } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { EventEmitterModule } from '@nestjs/event-emitter';
-import { APP_GUARD, APP_INTERCEPTOR, APP_PIPE, APP_FILTER } from '@nestjs/core';
+import { APP_INTERCEPTOR, APP_PIPE, APP_FILTER } from '@nestjs/core';
 import { join } from 'path';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { RedisModule } from '@liaoliaots/nestjs-redis';
@@ -106,7 +106,6 @@ import { TenantModelsInitializeModule } from '../Tenancy/TenantModelsInitialize.
 import { SocketModule } from '../Socket/Socket.module';
 import { EEModule } from '../EE/EE.module';
 import { AnalyticsModule } from '../Analytics/Analytics.module';
-import { ThrottlerGuard } from '@nestjs/throttler';
 import { AppThrottleModule } from './AppThrottle.module';
 import { AiAskModule } from '../AiAsk/AiAsk.module';
 
@@ -271,10 +270,6 @@ import { AiAskModule } from '../AiAsk/AiAsk.module';
     {
       provide: APP_PIPE,
       useClass: ValidationPipe,
-    },
-    {
-      provide: APP_GUARD,
-      useClass: ThrottlerGuard,
     },
     {
       provide: APP_INTERCEPTOR,

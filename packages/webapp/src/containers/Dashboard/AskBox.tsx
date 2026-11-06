@@ -1,17 +1,7 @@
 import React, { useState } from 'react';
 import { BarChart } from '@/components/BarChart';
-import {
-  AiAnswer,
-  AiChart,
-  useAiQuestions,
-  useAskQuestion,
-} from '@/hooks/query/ai';
-
-function Chart({ chart }: { chart: AiChart | null }) {
-  return chart ? (
-    <BarChart title={chart.title} labels={chart.labels} values={chart.values} />
-  ) : null;
-}
+import { AiAnswer, useAiQuestions, useAskQuestion } from '@/hooks/query/ai';
+import '@/components/Ask.css';
 
 export function AskBox() {
   const [open, setOpen] = useState(false);
@@ -37,13 +27,25 @@ export function AskBox() {
             <div key={row.id}>
               <div>{row.question}</div>
               <div>{row.answer}</div>
-              <Chart chart={row.chart} />
+              {row.chart ? (
+                <BarChart
+                  title={row.chart.title}
+                  labels={row.chart.labels}
+                  values={row.chart.values}
+                />
+              ) : null}
             </div>
           ))}
           {latest ? (
             <div>
               <div>{latest.answer}</div>
-              <Chart chart={latest.chart} />
+              {latest.chart ? (
+                <BarChart
+                  title={latest.chart.title}
+                  labels={latest.chart.labels}
+                  values={latest.chart.values}
+                />
+              ) : null}
             </div>
           ) : null}
           {ask.error ? <p>{ask.error.message}</p> : null}

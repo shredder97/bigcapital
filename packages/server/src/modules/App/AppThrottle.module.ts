@@ -1,6 +1,6 @@
 import { ExecutionContext, Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { ThrottlerModule, ThrottlerStorage } from '@nestjs/throttler';
+import { ThrottlerModule } from '@nestjs/throttler';
 import { THROTTLER_LIMIT } from '@nestjs/throttler/dist/throttler.constants';
 import { ThrottlerStorageRedisService } from '@nest-lab/throttler-storage-redis';
 import { ClsServiceManager } from 'nestjs-cls';
@@ -29,13 +29,20 @@ export function resolveThrottleTracker(req: Record<string, any>): string {
   return `ip:${req.ip || 'unknown'}`;
 }
 
+const aiThrottler = {
+  name: 'ai',
+  ttl: 60000,
+  limit: 10,
+  skipIf: skipUnlessThrottled('ai'),
+  getTracker: (req: Record<string, any>) => resolveThrottleTracker(req),
+};
+
 export function createThrottleOptions(input: {
   isTest: boolean;
   globalTtl?: number;
   globalLimit?: number;
   authTtl?: number;
   authLimit?: number;
-  storage?: ThrottlerStorage;
 }) {
   return {
     throttlers: [
@@ -50,15 +57,8 @@ export function createThrottleOptions(input: {
         limit: input.isTest ? 1000000 : input.authLimit,
         skipIf: skipUnlessThrottled('auth'),
       },
-      {
-        name: 'ai',
-        ttl: 60000,
-        limit: 10,
-        skipIf: skipUnlessThrottled('ai'),
-        getTracker: (req: Record<string, any>) => resolveThrottleTracker(req),
-      },
+      aiThrottler,
     ],
-    ...(input.storage ? { storage: input.storage } : {}),
   };
 }
 
@@ -68,23 +68,40 @@ export function createThrottleOptions(input: {
       imports: [ConfigModule],
       inject: [ConfigService],
       useFactory: (configService: ConfigService) => {
+        // Use in-memory storage with very high limits for test environment
         const isTest =
           process.env.NODE_ENV === 'test' ||
           process.env.JEST_WORKER_ID !== undefined;
-        if (isTest) return createThrottleOptions({ isTest: true });
-        return createThrottleOptions({
-          isTest: false,
-          globalTtl: configService.get<number>('throttle.global.ttl'),
-          globalLimit: configService.get<number>('throttle.global.limit'),
-          authTtl: configService.get<number>('throttle.auth.ttl'),
-          authLimit: configService.get<number>('throttle.auth.limit'),
-          storage: new ThrottlerStorageRedisService({
-            host: configService.get<string>('redis.host') || 'localhost',
-            port: Number(configService.get<number>('redis.port') || 6379),
-            password: configService.get<string>('redis.password'),
-            db: configService.get<number>('redis.db'),
+
+        if (isTest) {
+          return createThrottleOptions({ isTest: true });
+        }
+
+        const host = configService.get<string>('redis.host') || 'localhost';
+        const port = Number(configService.get<number>('redis.port') || 6379);
+        const password = configService.get<string>('redis.password');
+        const db = configService.get<number>('redis.db');
+
+        const globalTtl = configService.get<number>('throttle.global.ttl');
+        const globalLimit = configService.get<number>('throttle.global.limit');
+        const authTtl = configService.get<number>('throttle.auth.ttl');
+        const authLimit = configService.get<number>('throttle.auth.limit');
+
+        return {
+          ...createThrottleOptions({
+            isTest: false,
+            globalTtl,
+            globalLimit,
+            authTtl,
+            authLimit,
           }),
-        });
+          storage: new ThrottlerStorageRedisService({
+            host,
+            port,
+            password,
+            db,
+          }),
+        };
       },
     }),
   ],
