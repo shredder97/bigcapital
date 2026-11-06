@@ -1,11 +1,9 @@
-import { createHmac, timingSafeEqual } from 'crypto';
 import { ExecutionContext, Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { ThrottlerModule, ThrottlerStorage } from '@nestjs/throttler';
 import { THROTTLER_LIMIT } from '@nestjs/throttler/dist/throttler.constants';
 import { ThrottlerStorageRedisService } from '@nest-lab/throttler-storage-redis';
 import { ClsServiceManager } from 'nestjs-cls';
-import { JWT_AUDIENCE, JWT_ISSUER } from '../Auth/Auth.constants';
 
 /** Skip a named throttler unless the handler or controller opted in. */
 export function skipUnlessThrottled(name: string) {
@@ -20,46 +18,15 @@ export function skipUnlessAuthThrottled(context: ExecutionContext): boolean {
   return skipUnlessThrottled('auth')(context);
 }
 
-function userIdFromBearer(req: Record<string, any>): string | undefined {
-  const header = req.headers?.authorization || req.headers?.Authorization;
-  if (typeof header !== 'string' || !header.startsWith('Bearer ')) return;
-  const secret = process.env.APP_JWT_SECRET;
-  if (!secret) return;
-  const parts = header.slice('Bearer '.length).split('.');
-  if (parts.length !== 3) return;
-  try {
-    const expected = createHmac('sha384', secret)
-      .update(`${parts[0]}.${parts[1]}`)
-      .digest();
-    const actual = Buffer.from(parts[2], 'base64url');
-    if (
-      actual.length !== expected.length ||
-      !timingSafeEqual(actual, expected)
-    ) {
-      return;
-    }
-    const payload = JSON.parse(Buffer.from(parts[1], 'base64url').toString());
-    if (payload.iss !== JWT_ISSUER || payload.aud !== JWT_AUDIENCE) return;
-    if (typeof payload.exp === 'number' && payload.exp * 1000 < Date.now()) {
-      return;
-    }
-    return payload.sub == null ? undefined : String(payload.sub);
-  } catch {
-    return;
-  }
-}
-
-/** Rate-limit key. Authenticated calls count by the user, not the IP. */
+/** Ask calls count by the CLS user. Default and auth keep the guard's IP key. */
 export function resolveThrottleTracker(req: Record<string, any>): string {
   try {
     const userId = ClsServiceManager.getClsService().get('userId');
     if (userId != null && userId !== '') return `user:${userId}`;
   } catch {
-    // The throttler can run before the auth guard writes CLS.
+    // Called outside a request.
   }
-  const subject = userIdFromBearer(req);
-  if (subject) return `user:${subject}`;
-  return `ip:${req.ip || req.socket?.remoteAddress || 'unknown'}`;
+  return `ip:${req.ip || 'unknown'}`;
 }
 
 export function createThrottleOptions(input: {
@@ -88,9 +55,9 @@ export function createThrottleOptions(input: {
         ttl: 60000,
         limit: 10,
         skipIf: skipUnlessThrottled('ai'),
+        getTracker: (req: Record<string, any>) => resolveThrottleTracker(req),
       },
     ],
-    getTracker: (req: Record<string, any>) => resolveThrottleTracker(req),
     ...(input.storage ? { storage: input.storage } : {}),
   };
 }
@@ -104,9 +71,7 @@ export function createThrottleOptions(input: {
         const isTest =
           process.env.NODE_ENV === 'test' ||
           process.env.JEST_WORKER_ID !== undefined;
-
         if (isTest) return createThrottleOptions({ isTest: true });
-
         return createThrottleOptions({
           isTest: false,
           globalTtl: configService.get<number>('throttle.global.ttl'),

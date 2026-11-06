@@ -1,5 +1,6 @@
+import { rawRequest } from '@bigcapital/sdk-ts';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useAuthOrganizationId, useAuthToken } from '@/hooks/state';
+import { useApiFetcher } from '@/hooks/useRequest';
 
 export interface AiChart {
   type: 'bar';
@@ -18,66 +19,48 @@ export interface AiHistoryRow {
   question: string;
   answer: string;
   chart: AiChart | null;
-  createdAt?: string;
-  created_at?: string;
+  createdAt: string;
 }
 
 const NOT_CONFIGURED = "AI helper isn't set up on this server.";
 
-async function aiFetch(
+async function requestAi<T>(
+  fetcher: ReturnType<typeof useApiFetcher>,
+  method: string,
   path: string,
-  token: string | undefined,
-  organizationId: string | undefined,
-  init: RequestInit,
-) {
-  const response = await fetch(`/api${path}`, {
-    ...init,
-    headers: {
-      Accept: 'application/json',
-      ...(init.body ? { 'Content-Type': 'application/json' } : {}),
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      ...(organizationId ? { 'organization-id': organizationId } : {}),
-    },
-  });
-  const data = await response.json().catch(() => ({}));
-  if (!response.ok) {
-    const error = new Error(
-      data?.code === 'AI_NOT_CONFIGURED'
-        ? NOT_CONFIGURED
-        : data?.message || 'The AI helper could not answer that question.',
-    ) as Error & { status: number; code?: string };
-    error.status = response.status;
-    error.code = data?.code;
+  body?: Record<string, unknown>,
+): Promise<T> {
+  try {
+    return await rawRequest<T>(fetcher, method, path, body);
+  } catch (error) {
+    if (error instanceof Error && error.message.startsWith('HTTP 503')) {
+      const notConfigured = new Error(NOT_CONFIGURED) as Error & {
+        status: number;
+      };
+      notConfigured.status = 503;
+      throw notConfigured;
+    }
     throw error;
   }
-  return data;
 }
 
 export function useAiQuestions(enabled: boolean) {
-  const token = useAuthToken();
-  const organizationId = useAuthOrganizationId();
+  const fetcher = useApiFetcher({ enableCamelCaseTransform: true });
   return useQuery({
-    queryKey: ['ai', 'questions', organizationId],
+    queryKey: ['ai', 'questions'],
     enabled,
     queryFn: () =>
-      aiFetch('/ai/questions', token, organizationId, { method: 'GET' }),
+      requestAi<AiHistoryRow[]>(fetcher, 'GET', '/api/ai/questions'),
   });
 }
 
 export function useAskQuestion() {
-  const token = useAuthToken();
-  const organizationId = useAuthOrganizationId();
+  const fetcher = useApiFetcher({ enableCamelCaseTransform: true });
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (question: string) =>
-      aiFetch('/ai/ask', token, organizationId, {
-        method: 'POST',
-        body: JSON.stringify({ question }),
-      }) as Promise<AiAnswer>,
-    onSuccess: () => {
-      queryClient.invalidateQueries({
-        queryKey: ['ai', 'questions', organizationId],
-      });
-    },
+      requestAi<AiAnswer>(fetcher, 'POST', '/api/ai/ask', { question }),
+    onSuccess: () =>
+      queryClient.invalidateQueries({ queryKey: ['ai', 'questions'] }),
   });
 }

@@ -1,9 +1,13 @@
 import { Logger } from '@nestjs/common';
-import {
-  ANTHROPIC_MODEL,
-  AnthropicLlmClient,
-  LlmCompletionRequest,
-} from './AnthropicLlmClient';
+import { ANTHROPIC_MODEL, completeAnthropic } from './AnthropicLlmClient';
+
+type LlmCompletionRequest = {
+  system: string;
+  messages: Array<{ role: string; content: string }>;
+  tools: unknown[];
+  maxTokens: number;
+  signal: AbortSignal;
+};
 
 const KEY = 'sk-ant-unit-test-not-a-real-key';
 
@@ -79,9 +83,7 @@ describe('AnthropicLlmClient', () => {
         ],
       }),
     });
-    const client = new AnthropicLlmClient(fetchImpl);
-
-    const response = await client.complete(request(signal));
+    const response = await completeAnthropic(fetchImpl, request(signal));
     const [, init] = fetchImpl.mock.calls[0];
     const body = JSON.parse(init.body);
 
@@ -105,9 +107,9 @@ describe('AnthropicLlmClient', () => {
     const fetchImpl = jest
       .fn()
       .mockRejectedValue(new Error(`socket hang up ${KEY}`));
-    const client = new AnthropicLlmClient(fetchImpl);
-
-    const error = await client.complete(request()).catch((caught) => caught);
+    const error = await completeAnthropic(fetchImpl, request()).catch(
+      (caught) => caught,
+    );
 
     expect(String(error)).not.toContain(KEY);
     expect(String(error)).not.toContain('socket hang up');
@@ -121,9 +123,9 @@ describe('AnthropicLlmClient', () => {
       text: async () => `invalid x-api-key ${KEY}`,
       json: async () => ({ error: { message: KEY } }),
     });
-    const client = new AnthropicLlmClient(fetchImpl);
-
-    const error = await client.complete(request()).catch((caught) => caught);
+    const error = await completeAnthropic(fetchImpl, request()).catch(
+      (caught) => caught,
+    );
 
     expect(String(error)).not.toContain(KEY);
     expect(String(error)).not.toContain('invalid x-api-key');
@@ -136,9 +138,9 @@ describe('AnthropicLlmClient', () => {
         throw new SyntaxError('Unexpected token { in JSON');
       },
     });
-    const client = new AnthropicLlmClient(fetchImpl);
-
-    const error = await client.complete(request()).catch((caught) => caught);
+    const error = await completeAnthropic(fetchImpl, request()).catch(
+      (caught) => caught,
+    );
 
     expect(error).toBeInstanceOf(Error);
     expect(String(error)).not.toContain(KEY);
@@ -153,8 +155,6 @@ describe('AnthropicLlmClient', () => {
         content: 'not-json-blocks',
       }),
     });
-    const client = new AnthropicLlmClient(fetchImpl);
-
-    await expect(client.complete(request())).rejects.toThrow();
+    await expect(completeAnthropic(fetchImpl, request())).rejects.toThrow();
   });
 });

@@ -9,22 +9,19 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
-import { Throttle } from '@nestjs/throttler';
+import { Throttle, ThrottlerGuard } from '@nestjs/throttler';
 import { Request } from 'express';
 import { ApiCommonHeaders } from '@/common/decorators/ApiCommonHeaders';
 import { AuthorizationGuard } from '../Roles/Authorization.guard';
-import { AbilitySubject } from '../Roles/Roles.types';
 import { AiAskService } from './AiAsk.service';
 import { AskQuestionDto } from './AskQuestion.dto';
 
-type RequestWithAbility = Request & {
-  ability?: { can: (action: string, subject: AbilitySubject) => boolean };
-};
+type Ability = { can: (action: string, subject: string) => boolean };
 
 @Controller('ai')
 @ApiTags('AI')
 @ApiCommonHeaders()
-@UseGuards(AuthorizationGuard)
+@UseGuards(AuthorizationGuard, ThrottlerGuard)
 export class AiAskController {
   constructor(private readonly aiAsk: AiAskService) {}
 
@@ -32,7 +29,10 @@ export class AiAskController {
   @HttpCode(HttpStatus.OK)
   @Throttle({ ai: { limit: 10, ttl: 60000 } })
   @ApiOperation({ summary: 'Ask a read-only question about the books' })
-  ask(@Body() dto: AskQuestionDto, @Req() req: RequestWithAbility) {
+  ask(
+    @Body() dto: AskQuestionDto,
+    @Req() req: Request & { ability?: Ability },
+  ) {
     return this.aiAsk.ask(dto.question, req.ability);
   }
 

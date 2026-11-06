@@ -2,13 +2,20 @@ import 'reflect-metadata';
 import { Logger } from '@nestjs/common';
 import { ClsService } from 'nestjs-cls';
 import { ReportsAction } from '../FinancialStatements/types/Report.types';
+import { anthropicFetch } from './AnthropicLlmClient';
 import { AiAskService } from './AiAsk.service';
-import { AiAskTools } from './AiAsk.tools';
-import {
-  LlmClient,
-  LlmCompletionRequest,
-  LlmCompletionResponse,
-} from './AnthropicLlmClient';
+
+type LlmCompletionResponse = {
+  stopReason: string | null;
+  content: Array<Record<string, unknown>>;
+};
+type LlmCompletionRequest = {
+  system: string;
+  messages: unknown[];
+  tools: unknown[];
+  maxTokens: number;
+  signal: AbortSignal;
+};
 
 const KEY = 'sk-ant-unit-test-not-a-real-key';
 const QUESTION = 'How much did I spend on fuel this year?';
@@ -36,7 +43,27 @@ function scripted(responses: LlmCompletionResponse[]) {
     if (!next) throw new Error('no scripted response');
     return next;
   });
-  return { complete } as LlmClient & { complete: jest.Mock };
+  return { complete };
+}
+
+function useLlm(llm: { complete: (request: any) => Promise<any> }) {
+  anthropicFetch.current = (async (_url: string, init: RequestInit) => {
+    const body = JSON.parse(String(init?.body));
+    const result = await llm.complete({
+      system: body.system,
+      messages: body.messages,
+      tools: body.tools,
+      maxTokens: body.max_tokens,
+      signal: init.signal,
+    });
+    return {
+      ok: true,
+      json: async () => ({
+        stop_reason: result.stopReason,
+        content: result.content,
+      }),
+    };
+  }) as typeof fetch;
 }
 
 describe('AiAskService', () => {
@@ -63,13 +90,14 @@ describe('AiAskService', () => {
 
   afterEach(() => {
     delete process.env.ANTHROPIC_API_KEY;
+    anthropicFetch.current = fetch;
     logSpy.mockRestore();
     errorSpy.mockRestore();
     warnSpy.mockRestore();
   });
 
   function build(options?: {
-    llm?: LlmClient;
+    llm?: { complete: jest.Mock };
     userId?: number;
     rows?: Array<Record<string, unknown>>;
   }) {
@@ -91,7 +119,6 @@ describe('AiAskService', () => {
     const generalLedger = {
       sheet: jest.fn().mockResolvedValue({ data: [], query: {}, meta: {} }),
     };
-    const tools = new AiAskTools(profitLoss as never, generalLedger as never);
     const rows = options?.rows ?? [];
     const aiQuestion = () => ({
       query: () => {
@@ -130,9 +157,10 @@ describe('AiAskService', () => {
       get: (key: string) => (key === 'userId' ? userId : undefined),
     };
     const llm = options?.llm ?? scripted([]);
+    useLlm(llm);
     const service = new AiAskService(
-      llm,
-      tools,
+      profitLoss as never,
+      generalLedger as never,
       cls as unknown as ClsService,
       aiQuestion as never,
     );
@@ -400,13 +428,10 @@ describe('AiAskService', () => {
       }),
       toolUse('answer', { answer: 'Trimmed.', chart: null }),
     ]);
-    const tools = new AiAskTools(
+    useLlm(llm);
+    const service = new AiAskService(
       { sheet: jest.fn() } as never,
       generalLedger as never,
-    );
-    const service = new AiAskService(
-      llm,
-      tools,
       { get: () => 42 } as unknown as ClsService,
       (() => ({
         query: () => ({ insert: async () => ({}) }),
@@ -487,14 +512,11 @@ describe('AiAskService', () => {
           }),
       ),
     };
-    const tools = new AiAskTools(
-      profitLoss as never,
-      { sheet: jest.fn() } as never,
-    );
+    useLlm(llm);
     const inserted: unknown[] = [];
     const service = new AiAskService(
-      llm as LlmClient,
-      tools,
+      profitLoss as never,
+      { sheet: jest.fn() } as never,
       { get: () => 42 } as unknown as ClsService,
       (() => ({
         query: () => ({
@@ -551,13 +573,10 @@ describe('AiAskService', () => {
       }),
       toolUse('answer', { answer: 'Empty.', chart: null }),
     ]);
-    const tools = new AiAskTools(
+    useLlm(llm);
+    const service = new AiAskService(
       { sheet: jest.fn() } as never,
       generalLedger as never,
-    );
-    const service = new AiAskService(
-      llm,
-      tools,
       { get: () => 42 } as unknown as ClsService,
       (() => ({ query: () => ({ insert: async () => ({}) }) })) as never,
     );
@@ -616,11 +635,11 @@ describe('AiAskService', () => {
         return toolUse('answer', { answer: 'Fuel was 9.', chart: null });
       }),
     };
-    const tools = new AiAskTools(profitLoss as never, generalLedger as never);
+    useLlm(llm);
     const inserted: unknown[] = [];
     const service = new AiAskService(
-      llm as LlmClient,
-      tools,
+      profitLoss as never,
+      generalLedger as never,
       { get: () => 42 } as unknown as ClsService,
       (() => ({
         query: () => ({

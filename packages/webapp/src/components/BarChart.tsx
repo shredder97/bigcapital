@@ -1,4 +1,5 @@
 import React from 'react';
+import './Ask.css';
 
 export function BarChart({
   title,
@@ -13,40 +14,18 @@ export function BarChart({
   return (
     <div className="ask-bar-chart">
       {title ? <div>{title}</div> : null}
-      <div
-        aria-hidden="true"
-        style={{ display: 'flex', alignItems: 'flex-end', gap: 8, height: 120 }}
-      >
+      <div className="ask-bar-chart__bars" aria-hidden="true">
         {values.map((value, index) => (
-          <div
-            key={labels[index]}
-            style={{
-              flex: 1,
-              height: '100%',
-              display: 'flex',
-              flexDirection: 'column',
-              justifyContent: 'flex-end',
-            }}
-          >
+          <div key={labels[index]} className="ask-bar-chart__col">
             <div
               className="ask-bar-chart__bar"
-              style={{
-                height: max ? `${(value / max) * 100}%` : 0,
-                background: '#1a2744',
-              }}
+              style={{ height: max ? `${(value / max) * 100}%` : 0 }}
             />
             <span>{labels[index]}</span>
           </div>
         ))}
       </div>
       <table className="ask-bar-chart__table" hidden>
-        <caption>{title}</caption>
-        <thead>
-          <tr>
-            <th>Label</th>
-            <th>Value</th>
-          </tr>
-        </thead>
         <tbody>
           {labels.map((label, index) => (
             <tr key={label}>

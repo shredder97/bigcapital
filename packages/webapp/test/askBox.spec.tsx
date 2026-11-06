@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+// @vitest-environment happy-dom
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 (
@@ -14,6 +14,8 @@ import { BarChart } from '@/components/BarChart';
 vi.mock('@/hooks/state', () => ({
   useAuthToken: () => 'test-token',
   useAuthOrganizationId: () => 'org-1',
+  useSetGlobalErrors: () => () => undefined,
+  useAuthActions: () => ({ setLogout: () => undefined }),
 }));
 
 function jsonResponse(body: unknown, status = 200) {

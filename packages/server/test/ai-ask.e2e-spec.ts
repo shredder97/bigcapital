@@ -1,10 +1,13 @@
+import * as fs from 'fs';
+import * as path from 'path';
 import request = require('supertest');
 import { INestApplication } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
 import { Logger } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { ClsService } from 'nestjs-cls';
 import { AppModule } from '../src/modules/App/App.module';
-import { LLM_CLIENT } from '../src/modules/AiAsk/AnthropicLlmClient';
+import { anthropicFetch } from '../src/modules/AiAsk/AnthropicLlmClient';
 import { AiQuestion } from '../src/modules/AiAsk/AiQuestion.model';
 import { ProfitLossSheetApplication } from '../src/modules/FinancialStatements/modules/ProfitLossSheet/ProfitLossSheetApplication';
 import { ThrottlerStorage } from '@nestjs/throttler';
@@ -91,20 +94,98 @@ describe('Ask AI (e2e)', () => {
 
   beforeAll(async () => {
     process.env.ANTHROPIC_API_KEY = KEY;
+    anthropicFetch.current = (async (
+      _input: RequestInfo | URL,
+      init?: RequestInit,
+    ) => {
+      const body = JSON.parse(String(init?.body));
+      const result = (await fakeLlm.complete({
+        maxTokens: body.max_tokens,
+        messages: body.messages,
+        system: body.system,
+      })) as { stopReason: string; content: unknown };
+      return {
+        ok: true,
+        json: async () => ({
+          stop_reason: result.stopReason,
+          content: result.content,
+        }),
+      } as Response;
+    }) as typeof fetch;
+
     const moduleRef = await Test.createTestingModule({
       imports: [AppModule],
-    })
-      .overrideProvider(LLM_CLIENT)
-      .useValue(fakeLlm)
-      .compile();
+    }).compile();
 
     app = moduleRef.createNestApplication();
     app.getHttpAdapter().getInstance().set('trust proxy', 1);
     await app.init();
 
-    const signin = await request(app.getHttpServer())
+    const compiledMigrations = path.join(
+      __dirname,
+      '../dist/database/tenant/migrations',
+    );
+    if (fs.existsSync(compiledMigrations)) {
+      const tenantDatabase = app.get(ConfigService).get('tenantDatabase');
+      tenantDatabase.migrationsDir = compiledMigrations;
+      tenantDatabase.seedsDir = path.join(
+        __dirname,
+        '../dist/database/tenant/seeds/core',
+      );
+    }
+
+    let signin = await request(app.getHttpServer())
       .post('/auth/signin')
       .send({ email: SEEDED_EMAIL, password: SEEDED_PASSWORD });
+    if (!signin.body?.access_token && !signin.body?.accessToken) {
+      await request(app.getHttpServer())
+        .post('/auth/signup')
+        .send({
+          firstName: 'Ada',
+          lastName: 'Books',
+          email: SEEDED_EMAIL,
+          password: SEEDED_PASSWORD,
+        })
+        .expect(201);
+      signin = await request(app.getHttpServer())
+        .post('/auth/signin')
+        .send({ email: SEEDED_EMAIL, password: SEEDED_PASSWORD })
+        .expect(201);
+      const built = await request(app.getHttpServer())
+        .post('/organization/build')
+        .set({
+          Authorization: `Bearer ${signin.body.access_token || signin.body.accessToken}`,
+          'organization-id':
+            signin.body.organization_id || signin.body.organizationId,
+        })
+        .send({
+          name: 'Seeded Books',
+          location: 'US',
+          baseCurrency: 'USD',
+          timezone: 'America/New_York',
+          fiscalYear: 'january',
+          language: 'en',
+        })
+        .expect(200);
+      const jobId = built.body.data?.job_id ?? built.body.data?.jobId;
+      let state = '';
+      for (let attempt = 0; attempt < 40; attempt += 1) {
+        const job = await request(app.getHttpServer())
+          .get(`/organization/build/${jobId}`)
+          .set({
+            Authorization: `Bearer ${signin.body.access_token || signin.body.accessToken}`,
+            'organization-id':
+              signin.body.organization_id || signin.body.organizationId,
+          })
+          .expect(200);
+        state = job.body.state;
+        if (state === 'completed' || state === 'failed') break;
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+      }
+      if (state !== 'completed') {
+        throw new Error(`seeded organization build ${state}`);
+      }
+    }
     owner = {
       token: signin.body.access_token || signin.body.accessToken,
       organizationId: signin.body.organization_id || signin.body.organizationId,
@@ -138,6 +219,7 @@ describe('Ask AI (e2e)', () => {
 
   afterAll(async () => {
     delete process.env.ANTHROPIC_API_KEY;
+    anthropicFetch.current = fetch;
     await app?.close();
   });
 
